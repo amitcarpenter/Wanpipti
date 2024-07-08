@@ -1,17 +1,11 @@
-import mongoose from "mongoose";
-import dotenv from "dotenv";
-dotenv.config();
+import { createConnection } from 'typeorm';
 
-const DB_URI = process.env.DB_URI as string;
-
-const connect_mongodb = async (): Promise<void> => {
+export const connectDatabase = async () => {
   try {
-    await mongoose.connect(DB_URI);
-    console.log("Database Connected SuccessFully");
+    await createConnection();
+    console.log('Database connected successfully');
   } catch (error) {
-    console.log("Database Connection Error", error);
+    console.error('Database connection error:', error);
     process.exit(1);
   }
-};  
-
-export default connect_mongodb;
+};

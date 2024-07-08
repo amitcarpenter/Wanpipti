@@ -1,11 +1,12 @@
 import express, { Application, Request, Response } from "express";
-import mongodb_connection from "./src/config/db";
+import { connectDatabase } from "./src/config/db";
+import 'reflect-metadata';
 import configureApp from "./src/config/routes"
 import dotenv from "dotenv";
 import path from 'path';
 dotenv.config()
 
-mongodb_connection();
+connectDatabase();
 const app: Application = express();
 
 const PORT = process.env.PORT as string;
@@ -19,7 +20,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'src/views'));
 
 
-configureApp(app);
+// configureApp(app);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("PRO SPEECH APP")
