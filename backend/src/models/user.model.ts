@@ -1,37 +1,40 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from "typeorm";
 
-@Entity('users')
+@Entity("users")
 export class User {
     @PrimaryGeneratedColumn()
-    id!: number;
+    id: number;
 
     @Column({ unique: true })
-    username!: string;
-
-    @Column()
-    password!: string;
+    username: string;
 
     @Column({ unique: true })
-    email!: string;
-
-    @Column({ type: 'decimal', precision: 10, scale: 2, default: 0.00 })
-    wallet_balance!: number;
+    email: string;
 
     @Column()
-    first_name!: string;
+    password: string;
 
     @Column()
-    last_name!: string;
+    fullname: string;
 
-    @Column()
-    phone_number!: string;
+    @Column({ name: "phone_number" })
+    phoneNumber: string;
 
-    @Column()
-    address!: string;
+    @Column({ name: "wallet_balance", type: "decimal", precision: 10, scale: 2, default: 0 })
+    walletBalance: number;
 
-    @CreateDateColumn({ type: 'timestamp' })
-    created_at!: Date;
+    @Column({ name: "today_earning", type: "decimal", precision: 10, scale: 2, default: 0 })
+    todayEarning: number;
 
-    @UpdateDateColumn({ type: 'timestamp' })
-    updated_at!: Date;
+    @Column({ name: "total_earning", type: "decimal", precision: 10, scale: 2, default: 0 })
+    totalEarning: number;
+
+    @Column({ name: "profile_image", nullable: true })
+    profileImage: string;
+
+    @CreateDateColumn({ name: "created_at" })
+    createdAt: Date;
+
+    @UpdateDateColumn({ name: "updated_at" })
+    updatedAt: Date;
 }

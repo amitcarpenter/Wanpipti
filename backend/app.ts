@@ -23,7 +23,7 @@ app.set('views', path.join(__dirname, 'src/views'));
 // configureApp(app);
 
 app.get("/", (req: Request, res: Response) => {
-  res.send("PRO SPEECH APP")
+  return res.send("Wanpipti Project in TypeScript , TyoeORM , Mysql , Node js")
 });
 
 
