@@ -20,7 +20,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'src/views'));
 
 
-// configureApp(app);
+configureApp(app);
 
 app.get("/", (req: Request, res: Response) => {
   return res.send("Wanpipti Project in TypeScript , TyoeORM , Mysql , Node js")

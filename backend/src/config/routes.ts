@@ -4,12 +4,12 @@ import cors from "cors";
 
 //==================================== middleware ==============================
 
-import { authenticateUser } from "../middlewares/auth";
+// import { authenticateUser } from "../middlewares/auth";
 
 //==================================== Import Routes ==============================
 
 import api_routes from "../routes/api";
-import admin_routes from "../routes/admin";
+// import admin_routes from "../routes/admin";
 
 //==================================== configureApp ==============================
 
@@ -19,7 +19,7 @@ const configureApp = (app: Application): void => {
   app.use(cookieParser());
   app.use(cors());
   app.use("/api", api_routes);
-  app.use("/api/admin", admin_routes);
+  // app.use("/api/admin", admin_routes);
 };
 
 export default configureApp;

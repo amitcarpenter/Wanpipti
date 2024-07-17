@@ -7,7 +7,7 @@
     "database": "Wanpipti",
     "synchronize": false,
     "logging": false,
-    "entities": ["src/models/**/*.ts"],
+    "entities": ["src/entities/**/*.ts"],
     "migrations": ["src/migrations/**/*.ts"],
     "subscribers": ["src/subscribers/**/*.ts"],
     "cli": {
