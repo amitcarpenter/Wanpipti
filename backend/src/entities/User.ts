@@ -3,15 +3,15 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 @Entity()
 export class User {
     @PrimaryGeneratedColumn()
-    id: number;
+    id: number ;
 
     @Column({ unique: true })
     email: string;
 
-    @Column({ nullable: true })
+    @Column({ unique: true, nullable: true })
     username: string;
 
-    @Column()
+    @Column({ nullable: true })
     password: string;
 
     @Column({ nullable: true })
@@ -36,10 +36,13 @@ export class User {
     jwt_token: string;
 
     @Column({ nullable: true })
-    reset_password_token: string;
+    google_signup_token: string;
 
-    @Column({ type: 'timestamp', nullable: true })
-    reset_password_token_expiry: Date;
+    @Column({ nullable: true, type: 'varchar', length: 64 })
+    reset_password_token: string | null;
+
+    @Column({ type: 'timestamp', nullable: true, default: null })
+    reset_password_token_expiry: Date | null;
 
     @Column({ default: "traditional" })
     signup_method: string; // "google" or "traditional"

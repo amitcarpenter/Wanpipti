@@ -16,6 +16,8 @@
     "src/**/*.ts",
     "package.json",
     "package-lock.json",
-    "uploads/**/*"
-, "src/data-source.ts"  ]
+    "uploads/**/*",
+    "src/data-source.ts",
+    "src/**/*"
+  ]
 }

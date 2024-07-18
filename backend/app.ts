@@ -2,8 +2,8 @@ import express, { Application, Request, Response } from "express";
 import { connectDatabase } from "./src/config/db";
 import 'reflect-metadata';
 import configureApp from "./src/config/routes"
-import dotenv from "dotenv";
 import path from 'path';
+import dotenv from "dotenv";
 dotenv.config()
 
 connectDatabase();

@@ -1,7 +1,10 @@
 import nodemailer from 'nodemailer';
 import path from 'path';
-const EMAIL_USER = process.env.EMAIL_USER
-const EMAIL_PASS = process.env.EMAIL_PASS
+import dotenv from "dotenv";
+dotenv.config()
+
+const EMAIL_USER = process.env.EMAIL_USER as string
+const EMAIL_PASS = process.env.EMAIL_PASS as string
 
 interface SendOtpEmailOptions {
     to: string;
@@ -24,27 +27,6 @@ const transporter = nodemailer.createTransport({
         pass: EMAIL_PASS
     }
 });
-
-
-// send email 
-// export const send_otp_on_email = async ({ to, otp }: SendOtpEmailOptions): Promise<void> => {
-//     const mailOptions = {
-//         from: EMAIL_USER,
-//         to,
-//         subject: 'Your Verification OTP Code',
-//         text: `Your OTP code is ${otp}. .`,
-//         html: `<p>Your OTP code is <b>${otp}</b>.</p>`
-//     };
-
-//     try {
-//         await transporter.sendMail(mailOptions);
-//         console.log(`OTP email sent to ${to}`);
-//     } catch (error) {
-//         console.error('Error sending OTP email:', error);
-//         throw new Error('Error sending OTP email');
-//     }
-// };
-
 
 export const send_otp_on_email = async ({ to, otp }: SendOtpEmailOptions): Promise<void> => {
     const logoPath = path.resolve(__dirname, '../assets/logo.png');
