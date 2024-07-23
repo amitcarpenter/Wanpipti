@@ -9,7 +9,7 @@ export class Game {
   game_time: string; // "2pm", "5pm", "9pm"
 
   @Column()
-  status: string; // "completed", "scheduled", "cancelled"
+  status: string; // "completed", "active", "cancelled"
 
   @Column({ nullable: true })
   winning_number: string;

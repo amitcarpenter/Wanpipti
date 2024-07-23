@@ -1,17 +1,16 @@
+import { Role } from '../entities/Role'; // Import Role if needed
+
 export interface IUser {
-    id: number ;
+    id: number;
     full_name: string;
     email: string;
     password: string;
-    wallet_balance?: number;
     profile_image?: string;
-    today_earning?: number;
-    total_earning?: number;
-    role: "admin" | "user";
+    role?: Role;
     jwt_token?: string;
     google_signup_token?: string;
-    reset_password_token?: string;
-    reset_password_token_expiry?: Date;
+    reset_password_token?: string | null;
+    reset_password_token_expiry?: Date | null; // Change here
     signup_method: "google" | "traditional";
     created_at: Date;
     updated_at: Date;

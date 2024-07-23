@@ -1,13 +1,22 @@
-import express, { Application, Request, Response } from "express";
-import { connectDatabase } from "./src/config/db";
-import 'reflect-metadata';
-import configureApp from "./src/config/routes"
 import path from 'path';
+import 'reflect-metadata';
 import dotenv from "dotenv";
-dotenv.config()
+import configureApp from "./src/config/routes"
+import { connectDatabase } from "./src/config/db";
+import express, { Application, Request, Response } from "express";
+import { cronJobForcreateGame } from "./src/services/cronJob"
+import { resetTodayEarnings } from "./src/services/cronJob"
 
-connectDatabase();
+// (async()=> await resetTodayEarnings())()
+dotenv.config()
 const app: Application = express();
+
+(async () => {
+  await connectDatabase();
+  let time = "12:01 AM"
+  cronJobForcreateGame(time)
+  await resetTodayEarnings()
+})()
 
 const PORT = process.env.PORT as string;
 const APP_URL = process.env.APP_URL as string;

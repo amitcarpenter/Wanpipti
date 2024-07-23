@@ -16,11 +16,8 @@ export class Bet {
   @Column()
   choosen_number: string;
 
-  @Column({ type: 'decimal' })
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
   bet_amount: number;
-
-  @Column({ default: false })
-  is_winner: boolean;
 
   @CreateDateColumn()
   created_at: Date;

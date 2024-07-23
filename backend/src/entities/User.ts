@@ -1,9 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Role } from './Role';
 
 @Entity()
 export class User {
     @PrimaryGeneratedColumn()
-    id: number ;
+    id: number;
 
     @Column({ unique: true })
     email: string;
@@ -17,19 +18,20 @@ export class User {
     @Column({ nullable: true })
     full_name: string;
 
-    @Column({ default: "user" })
-    role: string;
+    @ManyToOne(() => Role, { eager: true })
+    @JoinColumn({ name: 'role_id' })
+    role: Role;
 
-    @Column({ type: 'decimal', default: 0 })
+    @Column({ type: 'decimal', default: 0, precision: 10, scale: 2 })
     wallet_balance: number;
 
     @Column({ nullable: true })
     profile_image: string;
 
-    @Column({ type: 'decimal', default: 0 })
+    @Column({ type: 'decimal', default: 0, precision: 10, scale: 2 })
     today_earning: number;
 
-    @Column({ type: 'decimal', default: 0 })
+    @Column({ type: 'decimal', default: 0, precision: 10, scale: 2 })
     total_earning: number;
 
     @Column({ nullable: true })
@@ -44,8 +46,17 @@ export class User {
     @Column({ type: 'timestamp', nullable: true, default: null })
     reset_password_token_expiry: Date | null;
 
+    @Column({ nullable: true, type: 'varchar', length: 64 })
+    verify_token: string | null;
+
+    @Column({ type: 'timestamp', nullable: true, default: null })
+    verify_token_expiry: Date | null;
+
     @Column({ default: "traditional" })
-    signup_method: string; // "google" or "traditional"
+    signup_method: string;
+
+    @Column({ type: 'boolean', default: false })
+    is_verified: boolean;
 
     @CreateDateColumn()
     created_at: Date;

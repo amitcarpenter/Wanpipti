@@ -33,7 +33,7 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
             return res.status(404).json({
                 success: false,
                 status: 404,
-                message: 'User not found',
+                message: 'User Not Found',
             });
         }
 
@@ -53,8 +53,8 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
 // Chack Admin Or Not Middle ware
 export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as IUser;
-    if (user.role !== 'admin') {
-      return res.status(403).json({
+    if (user.role?.role_name !== 'Admin') { 
+        return res.status(403).json({
         success: false,
         status: 403,
         message: 'Forbidden: You do not have the necessary permissions'

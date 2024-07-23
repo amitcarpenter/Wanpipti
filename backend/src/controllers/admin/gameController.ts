@@ -3,6 +3,7 @@ import path from "path";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
+import moment from 'moment';
 import jwt from "jsonwebtoken";
 import { IUser } from "../../models/User";
 import { User } from "../../entities/User";
@@ -16,13 +17,28 @@ dotenv.config();
 
 const APP_URL = process.env.APP_URL as string;
 
+
 // Create Game
 export const createGame = async (req: Request, res: Response) => {
   try {
+    const today = moment().startOf('day').toDate();
+    const tomorrow = moment().startOf('day').add(1, 'day').toDate();
+    const gameRepositoryies = getRepository(Game);
+    const existingGames = await gameRepositoryies.find({
+      where: {
+        created_at: Between(today, tomorrow)
+      }
+    });
+
+    if (existingGames.length >= 3) {
+      return handleError(res, 400, 'Games already exist for today');
+    }
+
+
     const game_data = [
-      { game_time: "2 PM", status: "scheduled", winning_number: 12 },
-      { game_time: "5 PM", status: "scheduled", winning_number: 12 },
-      { game_time: "9 PM", status: "scheduled", winning_number: 12 },
+      { game_time: "2 PM", status: "active", winning_number: 25 },
+      { game_time: "5 PM", status: "active", winning_number: 12 },
+      { game_time: "9 PM", status: "active", winning_number: 12 },
     ];
 
     const gameRepository = getRepository(Game);
@@ -34,7 +50,7 @@ export const createGame = async (req: Request, res: Response) => {
       return await gameRepository.save(newGame);
     }));
 
-    return handleSuccess(res, 201, 'Games created successfully', savedGames);
+    return handleSuccess(res, 201, 'Games created successfully');
   } catch (error: any) {
     return handleError(res, 500, error.message);
   }
@@ -54,7 +70,6 @@ export const getGames = async (req: Request, res: Response) => {
     return handleError(res, 500, error.message);
   }
 };
-
 
 // get today games
 export const getTodayGames = async (req: Request, res: Response) => {
@@ -94,7 +109,7 @@ export const updateGame = async (req: Request, res: Response) => {
     }
     await gameRepository.update(id, req.body);
     const update_game = await gameRepository.findOneBy({ id });
-    return handleSuccess(res, 200, 'Game updated successfully', update_game);
+    return handleSuccess(res, 200, 'Game updated successfully');
   } catch (error: any) {
     return handleError(res, 500, error.message);
   }
@@ -115,6 +130,3 @@ export const deleteGame = async (req: Request, res: Response) => {
     return handleError(res, 500, error.message);
   }
 };
-
-
-console.log()

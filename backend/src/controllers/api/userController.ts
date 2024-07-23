@@ -4,18 +4,22 @@ import crypto from "crypto";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
+import { Role } from '../../entities/Role';
 import { IUser } from "../../models/User";
 import { User } from "../../entities/User";
+import { Wallet } from "../../entities/Wallet";
 import { Request, Response } from "express";
 import { getRepository, MoreThan } from "typeorm";
 import { sendEmail } from "../../services/otpService";
 import { handleError, handleSuccess } from "../../utils/responseHandler";
 dotenv.config();
 
-
-
-
 const APP_URL = process.env.APP_URL as string;
+
+// Generate veification Link
+const generateVerificationLink = (token: string, baseUrl: string) => {
+    return `${baseUrl}/api/verify-email?token=${token}`;
+};
 
 // Function to generate JWT token
 const generateAccessToken = (payload: {
@@ -48,6 +52,7 @@ const generateUsername = async (fullName: string): Promise<string> => {
 // Register User
 export const register = async (req: Request, res: Response) => {
     try {
+        // Validate request body
         const registerSchema = Joi.object({
             full_name: Joi.string().min(3).max(30).required(),
             email: Joi.string().email().required(),
@@ -58,26 +63,114 @@ export const register = async (req: Request, res: Response) => {
             return handleError(res, 400, error.details[0].message);
         }
         const { full_name, email, password } = value;
+
         const userRepository = getRepository(User);
+        const roleRepository = getRepository(Role);
+
+        // Check if email already exists
         const existEmail = await userRepository.findOne({ where: { email } });
         if (existEmail) {
             return handleError(res, 400, "Email already exists.");
         }
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const username = await generateUsername(full_name)
 
+        // Fetch the default role (ID: 0)
+        const defaultRole = await roleRepository.findOne({ where: { role_value: 0 } });
+        if (!defaultRole) {
+            return handleError(res, 500, "Default role not found.");
+        }
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const username = await generateUsername(full_name);
+        const verifyToken = crypto.randomBytes(32).toString('hex');
+        const verifyTokenExpiry = new Date(Date.now() + 3600000);
+
+        // Create new user
         const newUser = userRepository.create({
             full_name,
             email,
             password: hashedPassword,
-            username
+            username,
+            role: defaultRole,
+            verify_token: verifyToken,
+            verify_token_expiry: verifyTokenExpiry
+        });
+        const savedUser = await userRepository.save(newUser);
+
+        // Create wallet for the new user
+        const walletRepository = getRepository(Wallet);
+        const newWallet = walletRepository.create({
+            user: savedUser,
+            wallet_balance: 0,
+            today_earning: 0,
+            total_earning: 0,
+        });
+        await walletRepository.save(newWallet);
+
+        const baseUrl = req.protocol + '://' + req.get('host');
+        const verificationLink = generateVerificationLink(verifyToken, baseUrl);
+        const logoPath = path.resolve(__dirname, "../../assets/logo.png");
+
+        // Send verification email
+        const emailOptions = {
+            to: email,
+            subject: "Verify Your Email Address",
+            html: `
+                <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                    <h2>Email Verification</h2>
+                    <p>Thank you for registering. Please verify your email address by clicking the link below:</p>
+                    <a href="${verificationLink}" style="color: #1a73e8;">Verify Email</a>
+                    <p>This link will expire in 1 hour.</p>
+                </div>
+            `,
+            attachments: [
+                {
+                    filename: "logo.png",
+                    path: logoPath,
+                    cid: "unique@cid",
+                },
+            ],
+        };
+
+        await sendEmail(emailOptions);
+
+        return handleSuccess(res, 201, "Verification Link sent successfully Please verify your account.");
+    } catch (error: any) {
+        console.error('Error in register:', error);
+        return handleError(res, 500, error.message);
+    }
+};
+
+// Verify Email
+export const verifyEmail = async (req: Request, res: Response) => {
+    try {
+        const { token } = req.query;
+        console.log(token)
+        if (typeof token !== 'string') {
+            return handleError(res, 400, "Invalid token.");
+        }
+        const userRepository = getRepository(User);
+        // Find the user with the provided token
+        const user = await userRepository.findOne({
+            where: {
+                verify_token: token,
+                verify_token_expiry: MoreThan(new Date())
+            }
         });
 
-        const user_data = await userRepository.save(newUser);
+        if (!user) {
+            return handleError(res, 400, "Invalid or expired token.");
+        }
 
-        console.log("user_data", user_data);
-        return handleSuccess(res, 201, "User registered successfully.", user_data)
+        // Update user verification status
+        user.is_verified = true;
+        user.verify_token = null; // Clear the token after verification
+        user.verify_token_expiry = null; // Clear the token expiry date
+        await userRepository.save(user);
+        return handleSuccess(res, 200, "Email verified successfully.");
+
     } catch (error: any) {
+        console.error('Error in verifyEmail:', error);
         return handleError(res, 500, error.message);
     }
 };
@@ -97,7 +190,10 @@ export const login = async (req: Request, res: Response) => {
         const userRepository = getRepository(User);
         const user = await userRepository.findOneBy({ email });
         if (!user) {
-            return handleError(res, 404, "User not found.");
+            return handleError(res, 404, "User Not Found.");
+        }
+        if (user.is_verified == false) {
+            return handleError(res, 400, "Please verify your account.");
         }
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
@@ -139,7 +235,10 @@ export const forgot_password = async (req: Request, res: Response) => {
         const userRepository = getRepository(User);
         const user = await userRepository.findOneBy({ email });
         if (!user) {
-            return handleError(res, 404, "user not found")
+            return handleError(res, 404, "User Not Found")
+        }
+        if (user.is_verified == false) {
+            return handleError(res, 404, "Please Verify Your Account")
         }
         const resetToken = crypto.randomBytes(32).toString("hex");
         const resetTokenExpiry = new Date(Date.now() + 3600000);
@@ -244,6 +343,13 @@ export const signup_google = async (req: Request, res: Response) => {
                 user.signup_method = "google";
             }
         } else {
+
+            const roleRepository = getRepository(Role);
+            // Fetch the default role (ID: 0)
+            let defaultRole = await roleRepository.findOneBy({ role_value: 0 });
+            if (!defaultRole) {
+                return handleError(res, 500, "Default role not found.");
+            }
             const username = await generateUsername(full_name)
             user = userRepository.create({
                 email,
@@ -251,7 +357,8 @@ export const signup_google = async (req: Request, res: Response) => {
                 full_name,
                 signup_method: "google",
                 profile_image,
-                username
+                username,
+                role: defaultRole,
             });
         }
         const payload = {
@@ -260,7 +367,18 @@ export const signup_google = async (req: Request, res: Response) => {
         };
         const token = generateAccessToken(payload);
         user.jwt_token = token;
-        await userRepository.save(user);
+        const user_data = await userRepository.save(user);
+
+        if (!user) {
+            const walletRepository = getRepository(Wallet);
+            const newWallet = walletRepository.create({
+                user: user_data,
+                wallet_balance: 0,
+                today_earning: 0,
+                total_earning: 0,
+            });
+            await walletRepository.save(newWallet);
+        }
         return handleSuccess(res, 201, "User registered successfully via Google.", token)
     } catch (error: any) {
         console.error("Error during Google signup:", error);
@@ -276,12 +394,13 @@ export const getProfile = async (req: Request, res: Response) => {
         const user = await userRepository.findOneBy({ id: user_req.id });
 
         if (!user) {
-            return handleError(res, 404, "user not found")
+            return handleError(res, 404, "User Not Found")
         }
 
         if (user.profile_image && !user.profile_image.startsWith("http")) {
             user.profile_image = `${APP_URL}${user.profile_image}`;
         }
+
         return handleSuccess(res, 200, "User profile fetched successfully", user);
 
     } catch (error: any) {
@@ -309,7 +428,10 @@ export const updateProfile = async (req: Request, res: Response) => {
         const user = await userRepository.findOne({ where: { id: user_req.id } });
 
         if (!user) {
-            return handleError(res, 404, "user not found")
+            return handleError(res, 404, "User Not Found")
+        }
+        if (user.username == username) {
+            return handleError(res, 400, "username already exist")
         }
 
         if (full_name) user.full_name = full_name;
@@ -322,7 +444,7 @@ export const updateProfile = async (req: Request, res: Response) => {
             // await deleteImageFile(user.id, file_name);
         }
         const user_data = await userRepository.save(user);
-        return handleSuccess(res, 200, "Profile updated successfully", user_data);
+        return handleSuccess(res, 200, "Profile updated successfully");
 
     } catch (error: any) {
         return handleError(res, 500, error.message);

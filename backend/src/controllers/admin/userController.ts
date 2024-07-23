@@ -20,7 +20,7 @@ export const getUserList = async (req: Request, res: Response) => {
   try {
     const userRepository = getRepository(User);
     const userList = await userRepository.find({
-      where: { role: 'user' },
+      // where: { role.: 'user' },
       order: { created_at: 'DESC' }
     });
     if (!userList || userList.length === 0) {
@@ -50,7 +50,7 @@ export const getUserById = async (req: Request, res: Response) => {
     const userRepository = getRepository(User);
     const user = await userRepository.findOneBy({ id });
     if (!user) {
-      return handleError(res, 404, 'User not found');
+      return handleError(res, 404, 'User Not Found');
     }
     if (user.profile_image && !user.profile_image.startsWith('http')) {
       user.profile_image = APP_URL + user.profile_image;
@@ -82,7 +82,11 @@ export const updateUser = async (req: Request, res: Response) => {
     const user = await userRepository.findOneBy({ id });
 
     if (!user) {
-      return handleError(res, 404, "user not found")
+      return handleError(res, 404, "User Not Found")
+    }
+
+    if (user.username == username) {
+      return handleError(res, 400, "username already exist")
     }
 
     if (full_name) user.full_name = full_name;
@@ -95,7 +99,7 @@ export const updateUser = async (req: Request, res: Response) => {
       // await deleteImageFile(user.id, file_name);
     }
     const user_data = await userRepository.save(user);
-    return handleSuccess(res, 200, "Profile updated successfully", user_data);
+    return handleSuccess(res, 200, "Profile updated successfully");
 
   } catch (error: any) {
     return handleError(res, 500, error.message);
@@ -117,7 +121,7 @@ export const delete_user_by_id = async (req: Request, res: Response) => {
     const userToDelete = await userRepository.findOneBy({ id: userId });
 
     if (!userToDelete) {
-      return handleError(res, 404, 'User not found');
+      return handleError(res, 404, 'User Not Found');
     }
     const file_name = "profile.profileImage";
 
