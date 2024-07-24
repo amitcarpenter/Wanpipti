@@ -48,8 +48,8 @@ router.delete("/delete-role/:id", authenticateUser, isAdmin, roleControllers.del
 
 
 //===================================== Result  =============================
-router.post("/declare-result", authenticateUser, resultControllers.declareResults);
-// router.get("/bets/today", authenticateUser, resultControllers.getUserBetsForToday);
+router.post("/declare-result", authenticateUser,isAdmin, resultControllers.declareResults);
+router.get("/game-result/today/:game_id", authenticateUser,isAdmin, resultControllers.getTodaysResultsForGames);
 
 
 

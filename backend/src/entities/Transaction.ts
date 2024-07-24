@@ -10,7 +10,7 @@ export class Transaction {
   user: User;
 
   @Column()
-  transaction_type: string; // "deposit", "bet" or "withdraw"
+  transaction_type: string; // "deposit", "betPlace" , "betWin"or "withdraw"
 
   @Column({ type: 'decimal' })
   amount: number;

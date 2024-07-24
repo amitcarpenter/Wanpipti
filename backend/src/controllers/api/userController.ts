@@ -1,4 +1,5 @@
 import Joi from "joi";
+import ejs from 'ejs';
 import path from "path";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
@@ -107,22 +108,46 @@ export const register = async (req: Request, res: Response) => {
         });
         await walletRepository.save(newWallet);
 
+        // const baseUrl = req.protocol + '://' + req.get('host');
+        // const verificationLink = generateVerificationLink(verifyToken, baseUrl);
+        // const logoPath = path.resolve(__dirname, "../../assets/logo.png");
+
+        // // Send verification email
+        // const emailOptions = {
+        //     to: email,
+        //     subject: "Verify Your Email Address",
+        //     html: `
+        //         <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        //             <h2>Email Verification</h2>
+        //             <p>Thank you for registering. Please verify your email address by clicking the link below:</p>
+        //             <a href="${verificationLink}" style="color: #1a73e8;">Verify Email</a>
+        //             <p>This link will expire in 1 hour.</p>
+        //         </div>
+        //     `,
+        //     attachments: [
+        //         {
+        //             filename: "logo.png",
+        //             path: logoPath,
+        //             cid: "unique@cid",
+        //         },
+        //     ],
+        // };
+
+        // await sendEmail(emailOptions);
+
         const baseUrl = req.protocol + '://' + req.get('host');
         const verificationLink = generateVerificationLink(verifyToken, baseUrl);
         const logoPath = path.resolve(__dirname, "../../assets/logo.png");
+
+        // Render the EJS template
+        const emailTemplatePath = path.resolve(__dirname, '../../views/verifyAccount.ejs');
+        const emailHtml = await ejs.renderFile(emailTemplatePath, { verificationLink });
 
         // Send verification email
         const emailOptions = {
             to: email,
             subject: "Verify Your Email Address",
-            html: `
-                <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                    <h2>Email Verification</h2>
-                    <p>Thank you for registering. Please verify your email address by clicking the link below:</p>
-                    <a href="${verificationLink}" style="color: #1a73e8;">Verify Email</a>
-                    <p>This link will expire in 1 hour.</p>
-                </div>
-            `,
+            html: emailHtml,
             attachments: [
                 {
                     filename: "logo.png",
@@ -164,16 +189,22 @@ export const verifyEmail = async (req: Request, res: Response) => {
 
         // Update user verification status
         user.is_verified = true;
-        user.verify_token = null; // Clear the token after verification
-        user.verify_token_expiry = null; // Clear the token expiry date
+        user.verify_token = null;
+        user.verify_token_expiry = null;
         await userRepository.save(user);
-        return handleSuccess(res, 200, "Email verified successfully.");
+        // return handleSuccess(res, 200, "Email verified successfully.");
+        return res.render("successRegister.ejs")
 
     } catch (error: any) {
         console.error('Error in verifyEmail:', error);
         return handleError(res, 500, error.message);
     }
 };
+
+
+export const render_success_register = (req: Request, res: Response) => {
+    res.render("successRegister.ejs")
+}
 
 // Login
 export const login = async (req: Request, res: Response) => {
@@ -247,27 +278,16 @@ export const forgot_password = async (req: Request, res: Response) => {
         const user_data = await userRepository.save(user);
         const logoPath = path.resolve(__dirname, "../../assets/logo.png");
         console.log(logoPath);
-        const resetLink = `${req.protocol}://${req.get(
-            "host"
-        )}/api/reset-password?token=${resetToken}`;
+
+        const resetLink = `${req.protocol}://${req.get("host")}/api/reset-password?token=${resetToken}`;
+        const emailTemplatePath = path.resolve(__dirname, '../../views/forgotPassword.ejs');
+        const emailHtml = await ejs.renderFile(emailTemplatePath, { resetLink });
         const emailOptions = {
             to: email,
             subject: "Password Reset Request",
-            html: `
-                <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                    <h2>Password Reset Request</h2>
-                    <p>Click the link below to reset your password:</p>
-                    <a href="${resetLink}" style="color: #1a73e8;">Reset Password</a>
-                    <p>This link will expire in 1 hour.</p>
-                </div>
-            `,
-            attachments: [
-                {
-                    filename: "logo.png",
-                    path: logoPath,
-                    cid: "unique@cid",
-                },
-            ],
+            html: emailHtml,
+
+
         };
         await sendEmail(emailOptions);
         return handleSuccess(res, 200, "Password reset link sent to your email.",)
@@ -448,6 +468,71 @@ export const updateProfile = async (req: Request, res: Response) => {
 
     } catch (error: any) {
         return handleError(res, 500, error.message);
+    }
+};
+
+// Change Password
+export const changePassword = async (req: Request, res: Response) => {
+    try {
+        // Validation schema
+        const changePasswordSchema = Joi.object({
+            currentPassword: Joi.string().required(),
+            newPassword: Joi.string().min(8).required(),
+        });
+
+        // Validate request body
+        const { error } = changePasswordSchema.validate(req.body);
+        if (error) {
+            return res.status(400).json({
+                success: false,
+                status: 400,
+                message: error.details[0].message,
+            });
+        }
+        const user_req = req.user as IUser;
+        const { currentPassword, newPassword } = req.body;
+        const userRepository = getRepository(User);
+
+        // Find user
+        const user = await userRepository.findOneBy({ id: user_req.id });
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                status: 404,
+                message: "User not found",
+            });
+        }
+
+        // Check current password
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({
+                success: false,
+                status: 400,
+                message: "Current password is incorrect",
+            });
+        }
+
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Update user
+        user.password = hashedPassword;
+
+        // Save changes
+        await userRepository.save(user);
+
+        return res.status(200).json({
+            success: true,
+            status: 200,
+            message: "Password changed successfully",
+        });
+    } catch (error: any) {
+        return res.status(500).json({
+            success: false,
+            status: 500,
+            error: error.message,
+        });
     }
 };
 

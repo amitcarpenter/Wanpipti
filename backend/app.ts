@@ -15,7 +15,7 @@ const app: Application = express();
   await connectDatabase();
   let time = "12:01 AM"
   cronJobForcreateGame(time)
-  await resetTodayEarnings()
+  // await resetTodayEarnings()
 })()
 
 const PORT = process.env.PORT as string;

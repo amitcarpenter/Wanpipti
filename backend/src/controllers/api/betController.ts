@@ -1,4 +1,5 @@
 import Joi from "joi";
+import ejs from 'ejs';
 import path from "path";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
@@ -14,6 +15,7 @@ import { Request, Response } from "express";
 import { sendEmail } from "../../services/otpService";
 import { GameSetting } from "../../entities/GameSetting";
 import { getRepository, MoreThan, Between } from "typeorm";
+import { updateWalletBalance } from "./walletTransactionController"
 import { handleError, handleSuccess } from "../../utils/responseHandler";
 
 const APP_URL = process.env.APP_URL as string;
@@ -148,9 +150,28 @@ export const placeBet = async (req: Request, res: Response) => {
         const savedBet = await betRepository.save(newBet);
 
 
-        // Deduct the bet amount from the wallet balance
-        walletDetails.wallet_balance -= bet_amount;
-        await walletRepository.save(walletDetails);
+        // // Deduct the bet amount from the wallet balance
+        // walletDetails.wallet_balance -= bet_amount;
+        // await walletRepository.save(walletDetails);
+
+        // Update wallet balance using the new function
+        try {
+            await updateWalletBalance(user.id, "betPlace", bet_amount);
+        } catch (error: any) {
+            return handleError(res, 404, error.message);
+        }
+
+        let email = user?.email
+        const emailTemplatePath = path.resolve(__dirname, '../../views/betConfirmation.ejs');
+        const emailHtml = await ejs.renderFile(emailTemplatePath);
+        const emailOptions = {
+            to: email,
+            subject: "Bet Confirmed",
+            html: emailHtml,
+
+
+        };
+        await sendEmail(emailOptions);
 
         return handleSuccess(res, 201, "Bet placed successfully", savedBet);
     } catch (error: any) {
