@@ -20,10 +20,44 @@ dotenv.config();
 
 
 // Calculate the Winning Numbers
-const calculateWinnings = async (bets: Bet[], winningNumber: number, adminCommission: number) => {
+// const calculateWinnings = async (bets: Bet[], winningNumber: number, adminCommission: number) => {
+//     const winningBets = bets.filter((bet) => {
+//         let bet_choosen_number = Number(bet.choosen_number)
+//         return bet_choosen_number === winningNumber
+//     });
+
+//     if (winningBets.length === 0) {
+//         return {
+//             totalAmount: 0,
+//             adminCommission: 0,
+//             distributableAmount: 0,
+//             winnings: [],
+//         };
+//     }
+//     const totalBetAmount = bets.reduce((acc, bet) => Number(acc) + Number(bet.bet_amount), 0);
+//     const adminCommissionAmount = adminCommission;
+//     const distributableAmount = totalBetAmount - adminCommissionAmount;
+//     const totalWinningBetAmount = winningBets.reduce((acc, bet) => Number(acc) + Number(bet.bet_amount), 0);
+//     const winnings = winningBets.map(bet => {
+//         const winningAmount = (Number(bet.bet_amount) / totalWinningBetAmount) * distributableAmount;
+//         return {
+//             userId: bet.user.id,
+//             betId: bet.id,
+//             winningAmount: winningAmount,
+//         };
+//     });
+//     return {
+//         totalAmount: totalBetAmount,
+//         adminCommission: adminCommissionAmount,
+//         distributableAmount: distributableAmount,
+//         winnings: winnings,
+//     };
+// };
+
+const calculateWinnings = async (bets: Bet[], winningNumber: number, adminCommissionPercentage: number) => {
     const winningBets = bets.filter((bet) => {
-        let bet_choosen_number = Number(bet.choosen_number)
-        return bet_choosen_number === winningNumber
+        let bet_choosen_number = Number(bet.choosen_number);
+        return bet_choosen_number === winningNumber;
     });
 
     if (winningBets.length === 0) {
@@ -34,18 +68,34 @@ const calculateWinnings = async (bets: Bet[], winningNumber: number, adminCommis
             winnings: [],
         };
     }
+
+    // Calculate total bet amount
     const totalBetAmount = bets.reduce((acc, bet) => Number(acc) + Number(bet.bet_amount), 0);
-    const adminCommissionAmount = adminCommission;
+
+    // Calculate admin commission based on percentage
+    const adminCommissionAmount = (Number(adminCommissionPercentage) / 100) * totalBetAmount;
+
+    // Calculate distributable amount
     const distributableAmount = totalBetAmount - adminCommissionAmount;
+
+    // Calculate total winning bet amount
     const totalWinningBetAmount = winningBets.reduce((acc, bet) => Number(acc) + Number(bet.bet_amount), 0);
+    console.log(totalWinningBetAmount)
+    console.log("asdfa")
+
+    // Calculate winnings for each winning bet
     const winnings = winningBets.map(bet => {
-        const winningAmount = (Number(bet.bet_amount) / totalWinningBetAmount) * distributableAmount;
+        const winningAmount = (Number(bet.bet_amount) / Number(totalWinningBetAmount)) * Number(distributableAmount);
+        console.log(Number(bet.bet_amount))
+        console.log(Number(totalWinningBetAmount))
+        console.log(winningAmount)
         return {
             userId: bet.user.id,
             betId: bet.id,
             winningAmount: winningAmount,
         };
     });
+
     return {
         totalAmount: totalBetAmount,
         adminCommission: adminCommissionAmount,
@@ -54,108 +104,21 @@ const calculateWinnings = async (bets: Bet[], winningNumber: number, adminCommis
     };
 };
 
+
 // Declare Results
-// export const declareResults = async (req: Request, res: Response) => {
-//     try {
-//         const { game_id, winning_number, admin_commission_amount } = req.body;
-
-//         let winning_number_int = Number(winning_number)
-//         let admin_commission_percentage_int = Number(admin_commission_amount)
-
-//         if (!game_id || winning_number === undefined) {
-//             return handleError(res, 400, 'Game ID and winning number are required.');
-//         }
-//         const gameRepository = getRepository(Game);
-//         const betRepository = getRepository(Bet);
-//         const resultRepository = getRepository(Result);
-//         const walletRepository = getRepository(Wallet);
-
-//         // Find the game
-//         const game = await gameRepository.findOne({
-//             where: { id: game_id }
-//         });
-//         if (!game) {
-//             return handleError(res, 404, 'Game not found.');
-//         }
-//         // Check if the game result is already declared today
-//         const today = new Date();
-//         today.setHours(0, 0, 0, 0);  // Set the time to the start of the day
-//         const alreadyDeclared = await resultRepository.findOne({
-//             where: {
-//                 game: { id: game_id },
-//                 created_at: MoreThan(today)
-//             }
-//         });
-
-//            if (alreadyDeclared) {
-//                return handleError(res, 400, 'Result for this game has already been declared today.');
-//            }
-
-//         // Get all bets for the game
-//         const bets = await betRepository.find({
-//             where: { game: { id: game_id } },
-//             relations: ["user"]
-//         });
-//         if (bets.length === 0) {
-//             return handleError(res, 404, 'No bets found for this game.');
-//         }
-
-//         const result_calculate = await calculateWinnings(bets, winning_number_int, admin_commission_percentage_int);
-//         console.log(result_calculate)
-//         const results = [];
-
-//         for (const bet of bets) {
-//             const isWinning = Number(bet.choosen_number) === winning_number_int ? true : false;
-//             const winningEntry = result_calculate.winnings.find(w => w.betId === bet.id);
-//             const winningAmount = winningEntry ? winningEntry.winningAmount : 0;
-//             const result = resultRepository.create({
-//                 game,
-//                 bet,
-//                 user: bet.user,
-//                 is_winning: isWinning,
-//                 winning_amount: winningAmount
-//             });
-//             results.push(result);
-//         }
-//         await resultRepository.save(results);
-
-
-//         result_calculate.winnings.forEach(async winning => {
-//             const wallet = await walletRepository.findOne({
-//                 where: { user: { id: winning.userId } }
-//             });
-
-//             if (wallet) {
-//                 let wallet_balance = parseFloat(wallet.wallet_balance.toString());
-//                 let wallet_today_earning = parseFloat(wallet.today_earning.toString());
-//                 let wallet_total_earning = parseFloat(wallet.total_earning.toString());
-//                 wallet_balance += winning.winningAmount;
-//                 wallet_today_earning += winning.winningAmount;
-//                 wallet_total_earning += winning.winningAmount;
-//                 wallet.wallet_balance = wallet_balance;
-//                 wallet.today_earning = wallet_today_earning;
-//                 wallet.total_earning = wallet_total_earning;
-//                 await walletRepository.save(wallet);
-//             }
-//         });
-//         return handleSuccess(res, 201, 'Results declared successfully');
-//     } catch (error: any) {
-//         return handleError(res, 500, error.message);
-//     }
-// };
-
-
 export const declareResults = async (req: Request, res: Response) => {
     try {
-        const { game_id, winning_number, admin_commission_amount } = req.body;
+        const { game_id, winning_number, admin_commission_percentage } = req.body;
+
 
         let winning_number_int = Number(winning_number);
-        let admin_commission_percentage_int = Number(admin_commission_amount);
+        let admin_commission_percentage_int = Number(admin_commission_percentage);
 
         if (!game_id || winning_number === undefined) {
             return handleError(res, 400, 'Game ID and winning number are required.');
         }
 
+        const userRepository = getRepository(User);
         const gameRepository = getRepository(Game);
         const betRepository = getRepository(Bet);
         const resultRepository = getRepository(Result);
@@ -187,8 +150,11 @@ export const declareResults = async (req: Request, res: Response) => {
             where: { game: { id: game_id } },
             relations: ["user"]
         });
-        if (bets.length === 0) {
-            return handleError(res, 404, 'No bets found for this game.');
+
+        console.log(bets)
+        console.log("bets.length")
+        if (bets.length === 1) {
+            return handleError(res, 400, '1 bet found for this game. can not declare result');
         }
 
         const result_calculate = await calculateWinnings(bets, winning_number_int, admin_commission_percentage_int);
@@ -213,14 +179,15 @@ export const declareResults = async (req: Request, res: Response) => {
         // Update wallets for winners
         for (const winning of result_calculate.winnings) {
             try {
-                await updateWalletBalance(winning.userId, "betWin", winning.winningAmount);
-                
+                const user_find = await userRepository.findOneBy({ id: winning.userId });
+                await updateWalletBalance(user_find, "betWin", winning.winningAmount);
+
                 // Update today's earning and total earning
                 const walletRepository = getRepository(Wallet);
                 const wallet = await walletRepository.findOne({
                     where: { user: { id: winning.userId } }
                 });
-                
+
                 if (wallet) {
                     wallet.today_earning = parseFloat(wallet.today_earning.toString()) + winning.winningAmount;
                     wallet.total_earning = parseFloat(wallet.total_earning.toString()) + winning.winningAmount;

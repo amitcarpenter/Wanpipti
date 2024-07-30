@@ -19,6 +19,7 @@ import { updateWalletBalance } from "./walletTransactionController"
 import { handleError, handleSuccess } from "../../utils/responseHandler";
 
 const APP_URL = process.env.APP_URL as string;
+const TIMEZONE = process.env.TIMEZONE as string
 
 // Place Bet
 export const placeBet = async (req: Request, res: Response) => {
@@ -156,7 +157,7 @@ export const placeBet = async (req: Request, res: Response) => {
 
         // Update wallet balance using the new function
         try {
-            await updateWalletBalance(user.id, "betPlace", bet_amount);
+            await updateWalletBalance(user, "betPlace", bet_amount);
         } catch (error: any) {
             return handleError(res, 404, error.message);
         }
@@ -190,10 +191,9 @@ export const getUserBetsForToday = async (req: Request, res: Response) => {
         if (!user) {
             return handleError(res, 404, "User Not Found");
         }
-
-        // Get the start and end of the current day in the 'Asia/Kolkata' timezone
-        const startOfDay = moment().tz("Asia/Kolkata").startOf("day").toDate();
-        const endOfDay = moment().tz("Asia/Kolkata").endOf("day").toDate();
+        const timeZone = TIMEZONE;
+        const startOfDay = moment().tz(timeZone).startOf("day").toDate();
+        const endOfDay = moment().tz(timeZone).endOf("day").toDate();
 
         const bets = await betRepository
             .createQueryBuilder("bet")
@@ -208,7 +208,6 @@ export const getUserBetsForToday = async (req: Request, res: Response) => {
         if (bets.length === 0) {
             return handleError(res, 404, "No bets found for today");
         }
-
         return handleSuccess(res, 200, "Today Bets retrieved successfully", bets);
     } catch (error: any) {
         return handleError(res, 500, error.message);

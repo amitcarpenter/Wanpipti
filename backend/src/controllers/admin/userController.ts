@@ -6,10 +6,13 @@ import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import { IUser } from "../../models/User";
 import { User } from "../../entities/User";
+import { Role } from "../../entities/Role";
+import { Wallet } from "../../entities/Wallet";
 import { Request, Response } from "express";
 import { getRepository, MoreThan } from "typeorm";
 import { sendEmail } from "../../services/otpService";
 import { handleError, handleSuccess } from "../../utils/responseHandler";
+import { generateUsername } from "../api/userController"
 dotenv.config();
 
 const APP_URL = process.env.APP_URL as string;
@@ -128,6 +131,60 @@ export const delete_user_by_id = async (req: Request, res: Response) => {
     await userRepository.delete(userId);
     return handleSuccess(res, 200, 'User deleted successfully');
   } catch (error: any) {
+    return handleError(res, 500, error.message);
+  }
+};
+
+
+// Add User
+export const add_user = async (req: Request, res: Response) => {
+  try {
+    const addUserSchema = Joi.object({
+      full_name: Joi.string().min(3).max(30).required(),
+      email: Joi.string().email().required(),
+      password: Joi.string().min(8).required(),
+    });
+    const { error, value } = addUserSchema.validate(req.body);
+    if (error) {
+      return handleError(res, 400, error.details[0].message);
+    }
+    const { full_name, email, password } = value;
+
+    const userRepository = getRepository(User);
+    const roleRepository = getRepository(Role);
+    const existEmail = await userRepository.findOne({ where: { email } });
+    if (existEmail) {
+      return handleError(res, 400, "Email already exists.");
+    }
+    const defaultRole = await roleRepository.findOne({ where: { role_value: 0 } });
+    if (!defaultRole) {
+      return handleError(res, 500, "Default role not found.");
+    }
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const username = await generateUsername(full_name);
+
+    // Create new user
+    const newUser = userRepository.create({
+      full_name,
+      email,
+      password: hashedPassword,
+      username,
+      role: defaultRole,
+    });
+    const savedUser = await userRepository.save(newUser);
+    // Create wallet for the new user
+    const walletRepository = getRepository(Wallet);
+    const newWallet = walletRepository.create({
+      user: savedUser,
+      wallet_balance: 0,
+      today_earning: 0,
+      total_earning: 0,
+    });
+    await walletRepository.save(newWallet);
+    return handleSuccess(res, 201, "User Added Successfully.");
+  } catch (error: any) {
+    console.error('Error in add User:', error);
     return handleError(res, 500, error.message);
   }
 };

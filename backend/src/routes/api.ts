@@ -24,7 +24,8 @@ router.post("/reset-password", userControllers.reset_password);
 router.post("/change-password", authenticateUser, userControllers.changePassword);
 router.get("/profile", authenticateUser, userControllers.getProfile);
 router.post("/profile/update", authenticateUser, uploadFile, userControllers.updateProfile);
-router.get("/register_success", userControllers.render_success_register);
+router.get("/register-success", userControllers.render_success_register);
+router.get("/success-reset", userControllers.render_success_reset);
 
 
 //==================================== Game ==============================

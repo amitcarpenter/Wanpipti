@@ -6,6 +6,8 @@ import { Wallet } from '../entities/Wallet';
 import { Request, Response } from 'express';
 import { handleError, handleSuccess } from '../utils/responseHandler';
 
+const TIMEZONE = process.env.TIMEZONE as string
+
 // Function to create games
 export const createGame = async () => {
     try {
@@ -58,7 +60,6 @@ export const resetTodayEarnings = async () => {
     }
 };
 
-
 // Function to convert time string to cron expression
 export const timeToCronExpression = (time: string): string => {
     const [hourMinute, period] = time.split(' ');
@@ -82,7 +83,7 @@ export const cronJobForcreateGame = (time: string) => {
         const now = moment().tz('Asia/Kolkata').format();
         createGame();
     }, {
-        timezone: "Asia/Kolkata"
+        timezone: TIMEZONE
     });
 };
 

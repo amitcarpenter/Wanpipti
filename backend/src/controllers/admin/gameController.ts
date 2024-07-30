@@ -130,3 +130,68 @@ export const deleteGame = async (req: Request, res: Response) => {
     return handleError(res, 500, error.message);
   }
 };
+
+
+// update game setting 
+export const edit_game_details = async (req: Request, res: Response) => {
+  try {
+    const schema = Joi.object({
+      first_game_winning_number: Joi.number().required(),
+      second_game_winning_number: Joi.number().required(),
+      third_game_winning_number: Joi.number().required(),
+      created_at: Joi.string().required(),
+    });
+
+    const { error, value } = schema.validate(req.body);
+    if (error) {
+      return handleError(res, 400, error.details[0].message);
+    }
+
+    const { first_game_winning_number, second_game_winning_number, third_game_winning_number, created_at } = value;
+    const gameRepository = getRepository(Game);
+
+    const createdDate = new Date(created_at);
+    const startDate = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate() + 1);
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 1);
+
+
+    console.log(startDate, endDate)
+
+    // Fetch the games based on the created_at date
+    const games = await gameRepository.find({
+      where: {
+        created_at: Between(startDate, endDate)
+      }
+    });
+
+    if (games.length !== 3) {
+      return handleError(res, 404, 'Three games not found for the given created_at date');
+    }
+
+    const gameUpdates = games.map(game => {
+      switch (game.game_time) {
+        case '2 PM':
+          game.winning_number = first_game_winning_number;
+          break;
+        case '5 PM':
+          game.winning_number = second_game_winning_number;
+          break;
+        case '9 PM':
+          game.winning_number = third_game_winning_number;
+          break;
+        default:
+          break;
+      }
+      return game;
+    });
+
+    // Save the updated game settings
+    await gameRepository.save(gameUpdates);
+
+    return handleSuccess(res, 200, 'Game settings updated successfully', gameUpdates);
+  } catch (error: any) {
+    console.error('Error in edit_game_details:', error);
+    return handleError(res, 500, 'An error occurred while updating the game settings');
+  }
+};

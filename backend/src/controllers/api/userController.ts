@@ -29,14 +29,11 @@ const generateAccessToken = (payload: {
 }) => {
     const JWT_SECRET = process.env.JWT_SECRET as string;
     const JWT_EXPIRATION = process.env.JWT_EXPIRATION || "30d";
-
-    console.log(JWT_SECRET, JWT_EXPIRATION);
-
     return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
 };
 
 // Generate UserName
-const generateUsername = async (fullName: string): Promise<string> => {
+export const generateUsername = async (fullName: string): Promise<string> => {
     const userRepository = getRepository(User);
     const baseUsername = fullName.toLowerCase().replace(/\s+/g, '_');
     let username = baseUsername;
@@ -108,33 +105,6 @@ export const register = async (req: Request, res: Response) => {
         });
         await walletRepository.save(newWallet);
 
-        // const baseUrl = req.protocol + '://' + req.get('host');
-        // const verificationLink = generateVerificationLink(verifyToken, baseUrl);
-        // const logoPath = path.resolve(__dirname, "../../assets/logo.png");
-
-        // // Send verification email
-        // const emailOptions = {
-        //     to: email,
-        //     subject: "Verify Your Email Address",
-        //     html: `
-        //         <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-        //             <h2>Email Verification</h2>
-        //             <p>Thank you for registering. Please verify your email address by clicking the link below:</p>
-        //             <a href="${verificationLink}" style="color: #1a73e8;">Verify Email</a>
-        //             <p>This link will expire in 1 hour.</p>
-        //         </div>
-        //     `,
-        //     attachments: [
-        //         {
-        //             filename: "logo.png",
-        //             path: logoPath,
-        //             cid: "unique@cid",
-        //         },
-        //     ],
-        // };
-
-        // await sendEmail(emailOptions);
-
         const baseUrl = req.protocol + '://' + req.get('host');
         const verificationLink = generateVerificationLink(verifyToken, baseUrl);
         const logoPath = path.resolve(__dirname, "../../assets/logo.png");
@@ -204,6 +174,10 @@ export const verifyEmail = async (req: Request, res: Response) => {
 
 export const render_success_register = (req: Request, res: Response) => {
     res.render("successRegister.ejs")
+}
+
+export const render_success_reset = (req: Request, res: Response) => {
+    res.render("successReset.ejs")
 }
 
 // Login
@@ -329,7 +303,7 @@ export const reset_password = async (req: Request, res: Response) => {
         user.reset_password_token_expiry = null;
         await userRepository.save(user);
         return handleSuccess(res, 200, "Password reset successfully.",)
-
+        // return res.render("successReset.ejs")
     } catch (error: any) {
         console.error("Error in reset password controller:", error);
         return handleError(res, 500, error.message);
@@ -348,8 +322,8 @@ export const signup_google = async (req: Request, res: Response) => {
     const { error } = signupGoogleSchema.validate(req.body);
     if (error) {
         return handleError(res, 400, error.details[0].message);
-
     }
+
     const { email, google_signup_token, full_name, profile_image } = req.body;
 
     try {
@@ -357,20 +331,23 @@ export const signup_google = async (req: Request, res: Response) => {
         let user = await userRepository.findOne({ where: { email } });
 
         if (user) {
+            // If the user exists, update their information
             user.full_name = full_name || user.full_name;
             user.google_signup_token = google_signup_token;
             if (user.signup_method !== "traditional") {
                 user.signup_method = "google";
+                user.is_verified = true;
             }
         } else {
-
+            // If the user does not exist, create a new user
             const roleRepository = getRepository(Role);
-            // Fetch the default role (ID: 0)
-            let defaultRole = await roleRepository.findOneBy({ role_value: 0 });
+            const defaultRole = await roleRepository.findOneBy({ role_value: 0 });
             if (!defaultRole) {
                 return handleError(res, 500, "Default role not found.");
             }
-            const username = await generateUsername(full_name)
+
+            const username = await generateUsername(full_name);
+
             user = userRepository.create({
                 email,
                 google_signup_token,
@@ -379,17 +356,12 @@ export const signup_google = async (req: Request, res: Response) => {
                 profile_image,
                 username,
                 role: defaultRole,
+                is_verified: true
             });
-        }
-        const payload = {
-            userId: user.id,
-            email: user.email,
-        };
-        const token = generateAccessToken(payload);
-        user.jwt_token = token;
-        const user_data = await userRepository.save(user);
 
-        if (!user) {
+            const user_data = await userRepository.save(user);
+
+            // Create a wallet for the new user
             const walletRepository = getRepository(Wallet);
             const newWallet = walletRepository.create({
                 user: user_data,
@@ -399,7 +371,15 @@ export const signup_google = async (req: Request, res: Response) => {
             });
             await walletRepository.save(newWallet);
         }
-        return handleSuccess(res, 201, "User registered successfully via Google.", token)
+
+        const payload = { userId: user.id, email: user.email };
+        const token = generateAccessToken(payload);
+        user.jwt_token = token;
+
+        // Save the user again to ensure the token is stored
+        const user_data = await userRepository.save(user);
+
+        return handleSuccess(res, 201, "Login Successfully.", user_data.jwt_token);
     } catch (error: any) {
         console.error("Error during Google signup:", error);
         return handleError(res, 500, error.message);

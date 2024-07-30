@@ -152,7 +152,7 @@ export const updateGameSetting = async (req: Request, res: Response) => {
 
         if (game_id) {
             const gameRepository = getRepository(Game);
-            const game = await gameRepository.findOneBy({id : game_id});
+            const game = await gameRepository.findOneBy({ id: game_id });
 
             if (!game) {
                 return handleError(res, 404, 'Game not found');
@@ -172,3 +172,6 @@ export const updateGameSetting = async (req: Request, res: Response) => {
         return handleError(res, 500, 'An error occurred while updating the game setting');
     }
 };
+
+
+

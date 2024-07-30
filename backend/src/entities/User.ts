@@ -22,17 +22,10 @@ export class User {
     @JoinColumn({ name: 'role_id' })
     role: Role;
 
-    @Column({ type: 'decimal', default: 0, precision: 10, scale: 2 })
-    wallet_balance: number;
 
     @Column({ nullable: true })
     profile_image: string;
 
-    @Column({ type: 'decimal', default: 0, precision: 10, scale: 2 })
-    today_earning: number;
-
-    @Column({ type: 'decimal', default: 0, precision: 10, scale: 2 })
-    total_earning: number;
 
     @Column({ nullable: true })
     jwt_token: string;
