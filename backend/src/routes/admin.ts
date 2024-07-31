@@ -9,6 +9,7 @@ import * as betControllers from "../controllers/admin/betController";
 import * as roleControllers from "../controllers/admin/roleController";
 import * as resultControllers from "../controllers/admin/resultController";
 import * as gameSettingControllers from "../controllers/admin/gameSettingController";
+import * as gameBetSettingControllers from "../controllers/admin/gameBetSettingController";
 import * as walletTransactionControllers from "../controllers/admin/walletTransactionController";
 
 const router = express.Router();
@@ -27,13 +28,14 @@ router.post("/create-game", authenticateUser, isAdmin, gameControllers.createGam
 router.get("/games/today", authenticateUser, isAdmin, gameControllers.getTodayGames);
 router.post("/game/update/:id", authenticateUser, isAdmin, gameControllers.updateGame);
 router.delete("/game/delete/:id", authenticateUser, isAdmin, gameControllers.deleteGame);
+router.post("/create-game-by-admin", authenticateUser, isAdmin, gameControllers.createGameByAdmin);
 router.post("/game-winning-number-setting", authenticateUser, isAdmin, gameControllers.edit_game_details);
 
 
 //===================================== Bet =============================
+router.post("/bets-by-date", betControllers.getBetsbyDate);
 router.get("/bets", authenticateUser, betControllers.getBets);
 router.get("/bets/today", authenticateUser, isAdmin, betControllers.getBetsForToday);
-router.post("/bets-by-date", betControllers.getBetsbyDate);
 
 
 //===================================== Game Setting =============================
@@ -41,6 +43,13 @@ router.get("/game-settings-all", authenticateUser, isAdmin, gameSettingControlle
 router.post("/gamesetting-update", authenticateUser, isAdmin, gameSettingControllers.updateGameSetting);
 router.post("/create-game-setting", authenticateUser, isAdmin, gameSettingControllers.createGameSetting);
 router.get("/get-today-game-setting", authenticateUser, gameSettingControllers.getAllGameSettingsForToday);
+
+
+//===================================== Game Bet Setting =============================
+router.get("/game-bet-settings-all", gameBetSettingControllers.getAllGameBetSettings);
+router.post("/gamebetsetting-update", gameBetSettingControllers.updateBetGameSetting);
+router.post("/create-bet-game-setting", gameBetSettingControllers.createGameBetSetting);
+router.delete("/gamebetsetting/delete/:id", gameBetSettingControllers.delete_game_limit);
 
 
 //===================================== Role  =============================

@@ -62,37 +62,6 @@ export const getBetsForToday = async (req: Request, res: Response) => {
 };
 
 // getbets by date
-// export const getBetsbyDate = async (req: Request, res: Response) => {
-//     try {
-//         const { created_at } = req.body
-//         if (!created_at) {
-//             return handleError(res, 400, "created_at not provided")
-//         }
-
-//         const createdDate = new Date(created_at);
-//         const startOfDay = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate());
-//         const endOfDay = new Date(startOfDay);
-//         endOfDay.setDate(startOfDay.getDate() + 1);
-//         const betRepository = getRepository(Bet);
-
-//         console.log(startOfDay, endOfDay)
-//         const bets = await betRepository.find({
-//             where: {
-//                 created_at: Between(startOfDay, endOfDay)
-//             },
-//             relations : ["result"]
-//         });
-
-//         if (bets.length === 0) {
-//             return handleError(res, 404, "No bets found for this date");
-//         }
-
-//         return handleSuccess(res, 200, "Bets retrieved successfully", bets);
-//     } catch (error: any) {
-//         return handleError(res, 500, error.message);
-//     }
-// };
-
 export const getBetsbyDate = async (req: Request, res: Response) => {
     try {
         const { created_at } = req.body;
@@ -128,7 +97,7 @@ export const getBetsbyDate = async (req: Request, res: Response) => {
             where: {
                 bet: In(betIds)
             },
-            relations : ["bet"]
+            relations: ["bet"]
         });
 
         const betsWithResults = bets.map(bet => {

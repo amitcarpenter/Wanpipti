@@ -95,7 +95,7 @@ export const getTodayGames = async (req: Request, res: Response) => {
   }
 };
 
-
+// update Game
 export const updateGame = async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
@@ -130,7 +130,6 @@ export const deleteGame = async (req: Request, res: Response) => {
     return handleError(res, 500, error.message);
   }
 };
-
 
 // update game setting 
 export const edit_game_details = async (req: Request, res: Response) => {
@@ -193,5 +192,45 @@ export const edit_game_details = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Error in edit_game_details:', error);
     return handleError(res, 500, 'An error occurred while updating the game settings');
+  }
+};
+
+// Create Game By Admin
+export const createGameByAdmin = async (req: Request, res: Response) => {
+  try {
+    const { created_at, games } = req.body;
+
+    console.log(req.body)
+    if (!created_at || !games) {
+      return handleError(res, 400, 'created_at or games data not provided');
+    }
+    // const createdDate = moment(created_at, 'MM/DD/YYYY').startOf('day').toDate();
+    const createdDate = moment(created_at, 'MM/DD/YYYY').startOf('day').add(1, 'day').toDate();
+    console.log(createdDate)
+    const gameRepository = getRepository(Game);
+
+    // Check if games already exist for the provided date
+    const existingGames = await gameRepository.find({
+      where: {
+        created_at: Between(createdDate, moment(createdDate).add(1, 'day').toDate())
+      }
+    });
+
+    if (existingGames.length >= 3) {
+      return handleError(res, 400, 'Games already exist for the provided date');
+    }
+
+    // Create and save new games
+    const savedGames = await Promise.all(games.map(async (game: any) => {
+      const newGame = gameRepository.create({
+        ...game,
+        created_at: createdDate
+      });
+      return await gameRepository.save(newGame);
+    }));
+
+    return handleSuccess(res, 201, 'Games created successfully', savedGames);
+  } catch (error: any) {
+    return handleError(res, 500, error.message);
   }
 };
