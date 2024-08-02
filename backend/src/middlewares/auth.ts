@@ -30,9 +30,9 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
         const userRepository = getRepository(User);
         const user = await userRepository.findOneBy({ id: parseInt(decodedToken.userId) });
         if (!user) {
-            return res.status(404).json({
+            return res.status(400).json({
                 success: false,
-                status: 404,
+                status: 400,
                 message: 'User Not Found',
             });
         }

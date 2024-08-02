@@ -39,7 +39,7 @@ export const createGameSetting = async (req: Request, res: Response) => {
         const game = await gameRepository.findOne({ where: { id: game_id } });
         const game_setting = await gameSettingRepository.findOne({ where: { game_id: game_id } });
         if (!game) {
-            return handleError(res, 404, 'Game not found');
+            return handleError(res, 400, 'Game not found');
         }
 
         if (game_setting?.game_id == game_id) {
@@ -147,7 +147,7 @@ export const updateGameSetting = async (req: Request, res: Response) => {
         let gameSetting = await gameSettingRepository.findOneBy({ game_id: game_id_interger });
 
         if (!gameSetting) {
-            return handleError(res, 404, 'Game setting not found');
+            return handleError(res, 400, 'Game setting not found');
         }
 
         if (game_id) {
@@ -155,7 +155,7 @@ export const updateGameSetting = async (req: Request, res: Response) => {
             const game = await gameRepository.findOneBy({ id: game_id });
 
             if (!game) {
-                return handleError(res, 404, 'Game not found');
+                return handleError(res, 400, 'Game not found');
             }
 
             gameSetting.game_id = game_id;

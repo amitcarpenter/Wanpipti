@@ -9,7 +9,7 @@ export class Wallet {
     @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
     wallet_balance: number;
 
-    @ManyToOne(() => User)
+    @ManyToOne(() => User, { onDelete: 'CASCADE' })
     user: User;
 
     @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })

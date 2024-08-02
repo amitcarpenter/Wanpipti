@@ -16,7 +16,10 @@ export class Transaction {
   amount: number;
 
   @Column()
-  status: string; // "pending", "completed", "failed"
+  status: string; // "pending", "completed", "failed" 
+
+  @Column({ type: 'decimal', nullable: true })
+  closing_balance: number; // New field for closing balance
 
   @CreateDateColumn()
   created_at: Date;

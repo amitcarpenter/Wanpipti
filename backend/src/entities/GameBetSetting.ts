@@ -12,6 +12,9 @@ export class GameBetSetting {
   @Column()
   max_bet_limit: number;
 
+  @Column()
+  set_date: Date;
+
   @CreateDateColumn()
   created_at: Date;
 

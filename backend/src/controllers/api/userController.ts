@@ -195,7 +195,7 @@ export const login = async (req: Request, res: Response) => {
         const userRepository = getRepository(User);
         const user = await userRepository.findOneBy({ email });
         if (!user) {
-            return handleError(res, 404, "User Not Found.");
+            return handleError(res, 400, "User Not Found.");
         }
         if (user.is_verified == false) {
             return handleError(res, 400, "Please verify your account.");
@@ -240,10 +240,10 @@ export const forgot_password = async (req: Request, res: Response) => {
         const userRepository = getRepository(User);
         const user = await userRepository.findOneBy({ email });
         if (!user) {
-            return handleError(res, 404, "User Not Found")
+            return handleError(res, 400, "User Not Found")
         }
         if (user.is_verified == false) {
-            return handleError(res, 404, "Please Verify Your Account")
+            return handleError(res, 400, "Please Verify Your Account")
         }
         const resetToken = crypto.randomBytes(32).toString("hex");
         const resetTokenExpiry = new Date(Date.now() + 3600000);
@@ -394,7 +394,7 @@ export const getProfile = async (req: Request, res: Response) => {
         const user = await userRepository.findOneBy({ id: user_req.id });
 
         if (!user) {
-            return handleError(res, 404, "User Not Found")
+            return handleError(res, 400, "User Not Found")
         }
 
         if (user.profile_image && !user.profile_image.startsWith("http")) {
@@ -428,10 +428,12 @@ export const updateProfile = async (req: Request, res: Response) => {
         const user = await userRepository.findOne({ where: { id: user_req.id } });
 
         if (!user) {
-            return handleError(res, 404, "User Not Found")
+            return handleError(res, 400, "User Not Found")
         }
-        if (user.username == username) {
-            return handleError(res, 400, "username already exist")
+
+        const existingUser = await userRepository.findOneBy({ username });
+        if (existingUser && existingUser.id !== user.id) {
+            return handleError(res, 400, "Username already exists");
         }
 
         if (full_name) user.full_name = full_name;
@@ -476,9 +478,9 @@ export const changePassword = async (req: Request, res: Response) => {
         // Find user
         const user = await userRepository.findOneBy({ id: user_req.id });
         if (!user) {
-            return res.status(404).json({
+            return res.status(400).json({
                 success: false,
-                status: 404,
+                status: 400,
                 message: "User not found",
             });
         }

@@ -31,6 +31,7 @@ export const getAllWalletTransactions = async (req: Request, res: Response) => {
                 "transaction.transaction_type",
                 "transaction.amount",
                 "transaction.status",
+                "transaction.closing_balance",
                 "transaction.created_at",
                 "transaction.updated_at",
                 "user.id",
@@ -39,26 +40,26 @@ export const getAllWalletTransactions = async (req: Request, res: Response) => {
             .getMany();
 
         if (transactions.length === 0) {
-            return handleError(res, 404, 'No transactions found.');
+            return handleError(res, 400, 'No transactions found.');
         }
 
-        // Get wallet balances for each user
-        const userIds = transactions.map(transaction => transaction.user.id);
-        const wallets = await walletRepository.createQueryBuilder("wallet")
-            .where("wallet.userId IN (:...userIds)", { userIds })
-            .leftJoinAndSelect("wallet.user", "user")
-            .getMany()
-        console.log(wallets)
-        // Attach wallet balances to transactions
-        const transactionsWithWallets = transactions.map(transaction => {
-            const wallet = wallets.find(wallet => wallet.user.id === transaction.user.id);
-            return {
-                ...transaction,
-                wallet_balance: wallet ? wallet.wallet_balance : 0
-            };
-        });
+        // // Get wallet balances for each user
+        // const userIds = transactions.map(transaction => transaction.user.id);
+        // const wallets = await walletRepository.createQueryBuilder("wallet")
+        //     .where("wallet.userId IN (:...userIds)", { userIds })
+        //     .leftJoinAndSelect("wallet.user", "user")
+        //     .getMany()
+        // console.log(wallets)
+        // // Attach wallet balances to transactions
+        // const transactionsWithWallets = transactions.map(transaction => {
+        //     const wallet = wallets.find(wallet => wallet.user.id === transaction.user.id);
+        //     return {
+        //         ...transaction,
+        //         wallet_balance: wallet ? wallet.wallet_balance : 0
+        //     };
+        // });
 
-        return handleSuccess(res, 200, 'Transactions retrieved successfully', transactionsWithWallets);
+        return handleSuccess(res, 200, 'Transactions retrieved successfully', transactions);
     } catch (error: any) {
         return handleError(res, 500, error.message);
     }

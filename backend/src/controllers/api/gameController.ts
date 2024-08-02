@@ -29,7 +29,7 @@ console.log(TIMEZONE)
 //     const user = await userRepository.findOneBy({ id: user_req.id });
 
 //     if (!user) {
-//       return handleError(res, 404, 'User not found.');
+//       return handleError(res, 400, 'User not found.');
 //     }
 
 //     // Use the desired timezone
@@ -55,7 +55,7 @@ console.log(TIMEZONE)
 //     });
 
 //     if (games.length === 0) {
-//       return handleError(res, 404, 'No games found for today.');
+//       return handleError(res, 400, 'No games found for today.');
 //     }
 
 //     const resultRepository = getRepository(Result);
@@ -97,7 +97,7 @@ console.log(TIMEZONE)
 //     const user = await userRepository.findOneBy({ id: user_req.id });
 
 //     if (!user) {
-//       return handleError(res, 404, 'User not found.');
+//       return handleError(res, 400, 'User not found.');
 //     }
 
 //     // Use the desired timezone
@@ -117,7 +117,7 @@ console.log(TIMEZONE)
 //     });
 
 //     if (games.length === 0) {
-//       return handleError(res, 404, 'No games found for today.');
+//       return handleError(res, 400, 'No games found for today.');
 //     }
 
 //     // Extract game IDs
@@ -185,7 +185,7 @@ export const getUserTodayGameResults = async (req: Request, res: Response) => {
     const user = await userRepository.findOneBy({ id: user_req.id });
 
     if (!user) {
-      return handleError(res, 404, 'User not found.');
+      return handleError(res, 400, 'User not found.');
     }
 
     // Use the desired timezone
@@ -205,7 +205,7 @@ export const getUserTodayGameResults = async (req: Request, res: Response) => {
     });
 
     if (games.length === 0) {
-      return handleError(res, 404, 'No games found for today.');
+      return handleError(res, 400, 'No games found for today.');
     }
 
     // Extract game IDs

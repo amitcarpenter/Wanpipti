@@ -101,7 +101,7 @@ export const getAllResultsForUser = async (req: Request, res: Response) => {
             .getMany();
 
         if (results.length === 0) {
-            return handleError(res, 404, 'No results found for the user');
+            return handleError(res, 400, 'No results found for the user');
         }
 
         return handleSuccess(res, 200, 'Total results for the user retrieved successfully', results);

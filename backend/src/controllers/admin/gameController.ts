@@ -57,19 +57,66 @@ export const createGame = async (req: Request, res: Response) => {
 };
 
 // get all games
+// export const getGames = async (req: Request, res: Response) => {
+//   try {
+//     const gameRepository = getRepository(Game);
+//     const games = await gameRepository.find({
+//       order: {
+//         created_at: 'DESC'
+//       }
+//     });
+
+//     // Group games by date
+//     const groupedGames = games.reduce((acc, game) => {
+//       const dateKey = new Date(game.created_at).toISOString().split('T')[0]; // Extracting date in 'YYYY-MM-DD' format
+//       if (!acc[dateKey]) {
+//         acc[dateKey] = [];
+//       }
+//       acc[dateKey].push(game);
+//       return acc;
+//     }, {} as Record<string, Game[]>);
+
+//     return handleSuccess(res, 200, 'Games fetched successfully', groupedGames);
+//   } catch (error: any) {
+//     return handleError(res, 500, error.message);
+//   }
+// };
+
 export const getGames = async (req: Request, res: Response) => {
   try {
     const gameRepository = getRepository(Game);
     const games = await gameRepository.find({
       order: {
-        created_at: 'DESC'
+        created_at: 'ASC'
       }
     });
-    return handleSuccess(res, 200, 'Games fetched successfully', games);
+
+    // Group games by date and aggregate time slots
+    const groupedGames = games.reduce((acc, game) => {
+      const dateKey = new Date(game.created_at).toISOString().split('T')[0]; // Extracting date in 'YYYY-MM-DD' format
+      const timeKey = game.game_time
+
+      if (!acc[dateKey]) {
+        acc[dateKey] = {
+          created_at: dateKey,
+          [`${timeKey}_winning_number`]: game.winning_number
+        };
+      } else {
+        acc[dateKey][`${timeKey}_winning_number`] = game.winning_number;
+      }
+
+      return acc;
+    }, {} as Record<string, any>);
+
+    // Convert the grouped games object to an array
+    const responseData = Object.values(groupedGames);
+
+    return handleSuccess(res, 200, 'Games fetched successfully', responseData);
   } catch (error: any) {
     return handleError(res, 500, error.message);
   }
 };
+
 
 // get today games
 export const getTodayGames = async (req: Request, res: Response) => {
@@ -102,7 +149,7 @@ export const updateGame = async (req: Request, res: Response) => {
     const gameRepository = getRepository(Game);
     const updatedGame = await gameRepository.findOneBy({ id });
     if (!updatedGame) {
-      return handleError(res, 404, 'Game not found');
+      return handleError(res, 400, 'Game not found');
     }
     if (req.body.winning_number > 99 || req.body.winning_number < 0) {
       return handleError(res, 400, 'Number should be between in 00-99');
@@ -122,7 +169,7 @@ export const deleteGame = async (req: Request, res: Response) => {
     const gameRepository = getRepository(Game);
     const gameToDelete = await gameRepository.findOneBy({ id });
     if (!gameToDelete) {
-      return handleError(res, 404, 'Game not found');
+      return handleError(res, 400, 'Game not found');
     }
     await gameRepository.delete(id);
     return handleSuccess(res, 200, 'Game deleted successfully');
@@ -165,7 +212,7 @@ export const edit_game_details = async (req: Request, res: Response) => {
     });
 
     if (games.length !== 3) {
-      return handleError(res, 404, 'Three games not found for the given created_at date');
+      return handleError(res, 400, 'Three games not found for the given created_at date');
     }
 
     const gameUpdates = games.map(game => {
@@ -196,23 +243,65 @@ export const edit_game_details = async (req: Request, res: Response) => {
 };
 
 // Create Game By Admin
+// export const createGameByAdmin = async (req: Request, res: Response) => {
+//   try {
+//     const { created_at, games } = req.body;
+
+//     console.log(req.body)
+//     if (!created_at || !games) {
+//       return handleError(res, 400, 'created_at or games data not provided');
+//     }
+//     // const createdDate = moment(created_at, 'MM/DD/YYYY').startOf('day').toDate();
+//     const createdDate = moment(created_at, 'MM/DD/YYYY').startOf('day').add(1, 'day').toDate();
+//     console.log(createdDate)
+//     console.log( moment(createdDate).toDate())
+//     const gameRepository = getRepository(Game);
+
+//     // Check if games already exist for the provided date
+//     const existingGames = await gameRepository.find({
+//       where: {
+//         created_at: Between(createdDate, moment(createdDate).toDate())
+//       }
+//     });
+
+//     if (existingGames.length >= 3) {
+//       return handleError(res, 400, 'Games already exist for the provided date');
+//     }
+
+//     // Create and save new games
+//     const savedGames = await Promise.all(games.map(async (game: any) => {
+//       const newGame = gameRepository.create({
+//         ...game,
+//         created_at: createdDate
+//       });
+//       return await gameRepository.save(newGame);
+//     }));
+
+//     return handleSuccess(res, 201, 'Games created successfully', savedGames);
+//   } catch (error: any) {
+//     return handleError(res, 500, error.message);
+//   }
+// };
+
+
+
 export const createGameByAdmin = async (req: Request, res: Response) => {
   try {
     const { created_at, games } = req.body;
 
-    console.log(req.body)
     if (!created_at || !games) {
       return handleError(res, 400, 'created_at or games data not provided');
     }
-    // const createdDate = moment(created_at, 'MM/DD/YYYY').startOf('day').toDate();
-    const createdDate = moment(created_at, 'MM/DD/YYYY').startOf('day').add(1, 'day').toDate();
-    console.log(createdDate)
+
+    // Create date for the start of the day
+    const createdDate = moment(created_at, 'MM/DD/YYYY').startOf('day').toDate();
+
     const gameRepository = getRepository(Game);
 
     // Check if games already exist for the provided date
     const existingGames = await gameRepository.find({
       where: {
-        created_at: Between(createdDate, moment(createdDate).add(1, 'day').toDate())
+        created_at: Between(createdDate, moment(createdDate).endOf('day').toDate())
       }
     });
 

@@ -63,7 +63,7 @@ export const getRoleById = async (req: Request, res: Response) => {
         const role = await roleRepository.findOneBy({ id });
         console.log(role)
         if (!role) {
-            return handleError(res, 404, 'Role not found');
+            return handleError(res, 400, 'Role not found');
         }
         return handleSuccess(res, 200, 'Role fetched successfully', role);
     } catch (error: any) {
@@ -90,7 +90,7 @@ export const updateRole = async (req: Request, res: Response) => {
         const roleRepository = getRepository(Role);
         const roleToUpdate = await roleRepository.findOneBy({ id });
         if (!roleToUpdate) {
-            return handleError(res, 404, 'Role not found');
+            return handleError(res, 400, 'Role not found');
         }
         await roleRepository.update(id, req.body);
         const updatedRole = await roleRepository.findOneBy({ id });
@@ -107,7 +107,7 @@ export const deleteRole = async (req: Request, res: Response) => {
         const roleRepository = getRepository(Role);
         const roleToDelete = await roleRepository.findOneBy({ id });
         if (!roleToDelete) {
-            return handleError(res, 404, 'Role not found');
+            return handleError(res, 400, 'Role not found');
         }
         await roleRepository.delete(id);
         return handleSuccess(res, 200, 'Role deleted successfully');

@@ -3,16 +3,26 @@ import { uploadFile } from "../services/uploadImage";
 import { authenticateUser, isAdmin } from "../middlewares/auth";
 
 //==================================== Import Controller ==============================
+import * as betControllers from "../controllers/admin/betController";
+import * as FAQsControllers from "../controllers/admin/FAQsController";
+import * as roleControllers from "../controllers/admin/roleController";
 import * as userControllers from "../controllers/admin/userController";
 import * as gameControllers from "../controllers/admin/gameController";
-import * as betControllers from "../controllers/admin/betController";
-import * as roleControllers from "../controllers/admin/roleController";
+import * as userControllersapi from "../controllers/api/userController";
 import * as resultControllers from "../controllers/admin/resultController";
 import * as gameSettingControllers from "../controllers/admin/gameSettingController";
 import * as gameBetSettingControllers from "../controllers/admin/gameBetSettingController";
 import * as walletTransactionControllers from "../controllers/admin/walletTransactionController";
 
 const router = express.Router();
+
+
+router.post("/login", userControllersapi.login);
+router.post("/forgot-password", userControllersapi.forgot_password);
+router.get("/profile", authenticateUser, userControllersapi.getProfile);
+router.post("/change-password", authenticateUser, userControllersapi.changePassword);
+router.post("/profile/update", authenticateUser, uploadFile, userControllersapi.updateProfile);
+
 
 //==================================== USER ==============================
 router.post("/user/add", authenticateUser, isAdmin, userControllers.add_user);
@@ -67,6 +77,15 @@ router.get("/game-result/today/:game_id", authenticateUser, isAdmin, resultContr
 
 //===================================== Wallet Transaction  =============================
 router.get("/get-wallet-trasaction/all", authenticateUser, isAdmin, walletTransactionControllers.getAllWalletTransactions);
+
+
+
+//===================================== FAQ  =============================
+router.get("/get-faq/all", authenticateUser, isAdmin, FAQsControllers.getFAQs);
+router.post("/create-faq", authenticateUser, isAdmin, FAQsControllers.createFAQ);
+router.get("/get-faq/:id", authenticateUser, isAdmin, FAQsControllers.getFAQById);
+router.put("/update-faq/:id", authenticateUser, isAdmin, FAQsControllers.updateFAQ);
+router.delete("/delete-faq/:id", authenticateUser, isAdmin, FAQsControllers.deleteFAQ);
 
 
 

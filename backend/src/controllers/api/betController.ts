@@ -44,7 +44,7 @@ export const placeBet = async (req: Request, res: Response) => {
 
 
         if (!user) {
-            return handleError(res, 404, "User Not Found");
+            return handleError(res, 400, "User Not Found");
         }
 
         const game = await gameRepository.findOne({
@@ -66,7 +66,7 @@ export const placeBet = async (req: Request, res: Response) => {
         }
 
         if (!game) {
-            return handleError(res, 404, "Game not found");
+            return handleError(res, 400, "Game not found");
         }
 
         // Check if the game is for the current date
@@ -134,7 +134,7 @@ export const placeBet = async (req: Request, res: Response) => {
         console.log(walletDetails)
 
         if (!walletDetails) {
-            return handleError(res, 404, 'Wallet not found.');
+            return handleError(res, 400, 'Wallet not found.');
         }
 
         // Check wallet balance 
@@ -159,7 +159,7 @@ export const placeBet = async (req: Request, res: Response) => {
         try {
             await updateWalletBalance(user, "betPlace", bet_amount);
         } catch (error: any) {
-            return handleError(res, 404, error.message);
+            return handleError(res, 400, error.message);
         }
 
         let email = user?.email
@@ -189,7 +189,7 @@ export const getUserBetsForToday = async (req: Request, res: Response) => {
         const user = await userRepository.findOneBy({ id: user_req.id });
 
         if (!user) {
-            return handleError(res, 404, "User Not Found");
+            return handleError(res, 400, "User Not Found");
         }
         const timeZone = TIMEZONE;
         const startOfDay = moment().tz(timeZone).startOf("day").toDate();
@@ -206,7 +206,7 @@ export const getUserBetsForToday = async (req: Request, res: Response) => {
             .getMany();
 
         if (bets.length === 0) {
-            return handleError(res, 404, "No bets found for today");
+            return handleError(res, 400, "No bets found for today");
         }
         return handleSuccess(res, 200, "Today Bets retrieved successfully", bets);
     } catch (error: any) {

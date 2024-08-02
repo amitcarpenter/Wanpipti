@@ -25,7 +25,7 @@ export const getUserWalletDetails = async (req: Request, res: Response) => {
         const userRepository = getRepository(User);
         const user = await userRepository.findOneBy({ id: user_req.id });
         if (!user) {
-            return handleError(res, 404, 'User not found.');
+            return handleError(res, 400, 'User not found.');
         }
 
         const walletRepository = getRepository(Wallet);
@@ -34,7 +34,7 @@ export const getUserWalletDetails = async (req: Request, res: Response) => {
         });
 
         if (!wallet) {
-            return handleError(res, 404, 'Wallet not found for the user.');
+            return handleError(res, 400, 'Wallet not found for the user.');
         }
 
         return handleSuccess(res, 200, 'Wallet details fetched successfully', wallet);
