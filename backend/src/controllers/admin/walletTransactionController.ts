@@ -37,6 +37,7 @@ export const getAllWalletTransactions = async (req: Request, res: Response) => {
                 "user.id",
                 "user.full_name",
             ])
+            .orderBy("transaction.created_at", "DESC")
             .getMany();
 
         if (transactions.length === 0) {

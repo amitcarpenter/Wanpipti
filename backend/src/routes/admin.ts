@@ -30,6 +30,7 @@ router.get("/user/:id", authenticateUser, isAdmin, userControllers.getUserById);
 router.get("/user-list", authenticateUser, isAdmin, userControllers.getUserList);
 router.delete("/user/delete/:id", authenticateUser, isAdmin, userControllers.delete_user_by_id);
 router.post("/user/update/:id", authenticateUser, isAdmin, uploadFile, userControllers.updateUser);
+router.get("/get-dashboard-data", authenticateUser, isAdmin, userControllers.get_admin_side_dashboard_box);
 
 
 //===================================== Game =============================
@@ -39,7 +40,7 @@ router.get("/games/today", authenticateUser, isAdmin, gameControllers.getTodayGa
 router.post("/game/update/:id", authenticateUser, isAdmin, gameControllers.updateGame);
 router.delete("/game/delete/:id", authenticateUser, isAdmin, gameControllers.deleteGame);
 router.post("/create-game-by-admin", authenticateUser, isAdmin, gameControllers.createGameByAdmin);
-router.post("/game-winning-number-setting", authenticateUser, isAdmin, gameControllers.edit_game_details);
+router.post("/update-game-by-admin", authenticateUser, isAdmin, gameControllers.edit_game_details);
 
 
 //===================================== Bet =============================

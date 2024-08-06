@@ -94,7 +94,7 @@ export const createGameBetSetting = async (req: Request, res: Response) => {
 export const getAllGameBetSettings = async (req: Request, res: Response) => {
     try {
         const gameSettingRepository = getRepository(GameBetSetting);
-        const gameSettings = await gameSettingRepository.find();
+        const gameSettings = await gameSettingRepository.find({order : {created_at : "DESC"}});
         return handleSuccess(res, 200, 'Game Bet settings retrieved successfully', gameSettings);
     } catch (error: any) {
         console.error('Error in getAllGameSettings:', error);

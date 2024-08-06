@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import configureApp from "./src/config/routes"
 import { connectDatabase } from "./src/config/db";
 import express, { Application, Request, Response } from "express";
-import { cronJobForcreateGame } from "./src/services/cronJob"
+import { cronJobForcreateGame, getGameDetails, getBetsAndUserDetails } from "./src/services/cronJob"
 import { resetTodayEarnings } from "./src/services/cronJob"
 
 // (async()=> await resetTodayEarnings())()
@@ -15,6 +15,11 @@ const app: Application = express();
   await connectDatabase();
   let time = "12:01 AM"
   cronJobForcreateGame(time)
+  // let game = await getGameDetails("5 PM")
+  // let game_int = Number(game?.id)
+  // console.log(game_int)
+  // console.log(await getBetsAndUserDetails(game))
+
   // await resetTodayEarnings()
 })()
 

@@ -1,12 +1,39 @@
 import cron from 'node-cron';
 import moment from 'moment-timezone';
-import { getRepository } from 'typeorm';
+import { Bet } from '../entities/Bet';
 import { Game } from '../entities/Game';
 import { Wallet } from '../entities/Wallet';
 import { Request, Response } from 'express';
+import { getRepository, MoreThan } from 'typeorm';
 import { handleError, handleSuccess } from '../utils/responseHandler';
+import { any, equal } from 'joi';
 
 const TIMEZONE = process.env.TIMEZONE as string
+
+
+
+
+// Schedule 2PM game processing
+// cron.schedule('0 14 * * *', process2pmGame);
+
+// Schedule 5PM game processing
+cron.schedule('0 17 * * *', async () => {
+    try {
+        // Same logic as process2pmGame but for 5PM
+    } catch (error) {
+        console.log("Error processing 5PM game:", error);
+    }
+});
+
+// Schedule 9PM game processing
+cron.schedule('0 21 * * *', async () => {
+    try {
+        // Same logic as process2pmGame but for 9PM
+    } catch (error) {
+        console.log("Error processing 9PM game:", error);
+    }
+});
+
 
 // Function to create games
 export const createGame = async () => {
@@ -87,3 +114,66 @@ export const cronJobForcreateGame = (time: string) => {
     });
 };
 
+
+export const getGameDetails = async (gameTime: string) => {
+    try {
+        console.log("api call for the game")
+        const gameRepository = getRepository(Game);
+        const currentDate = moment().tz(TIMEZONE).startOf('day').toDate();
+        console.log(currentDate);
+        const gameDetails = await gameRepository.findOne({
+            where: {
+                game_time: gameTime,
+                created_at: currentDate
+            }
+        });
+
+        if (!gameDetails) {
+            console.log(`No game found for ${gameTime} on the current date.`);
+            return null;
+        }
+        console.log(gameDetails)
+        return gameDetails;
+    } catch (error) {
+        console.log(`Error fetching game details for ${gameTime} on the current date:`, error);
+        throw error;
+    }
+};
+
+
+export const getBetsAndUserDetails = async (game: any) => {
+    try {
+        const betRepository = getRepository(Bet);
+
+        const bets = await betRepository.find({
+            relations: ['game', 'user'],
+            where: { game: { id: game.id } },
+        });
+        
+        if(game){
+            bets.forEach((bet)=>{
+                if(game.winning_number == bet.choosen_number)
+                    {
+                        console.log("TRUUUUUUUUUUUUUUU")
+                    }
+            })
+        }
+        console.log(bets, "ljalsdjfj")
+
+        if (bets.length === 0) {
+            console.log(`No bets found for game ID`);
+            return [];
+        }
+        return bets.map(bet => ({
+            betId: bet.id,
+            choosenNumber: bet.choosen_number,
+            betAmount: bet.bet_amount,
+            userId: bet.user.id,
+            userName: bet.user.full_name,
+            userEmail: bet.user.email
+        }));
+    } catch (error) {
+        console.log(`Error fetching bets and user details for game ID`, error);
+        throw error;
+    }
+};

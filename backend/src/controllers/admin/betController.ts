@@ -23,7 +23,13 @@ const TIMEZONE = process.env.TIMEZONE as string
 export const getBets = async (req: Request, res: Response) => {
     try {
         const betRepository = getRepository(Bet);
-        const bets = await betRepository.find({ relations: ['user', 'game'] });
+        const bets = await betRepository.find({
+            relations: ['user', 'game'],
+            order: {
+                created_at: 'DESC'
+            }
+        });
+
 
         if (bets.length === 0) {
             return handleError(res, 400, 'No bets found');
@@ -117,7 +123,13 @@ export const getBetsbyDate = async (req: Request, res: Response) => {
     try {
         const { created_at } = req.body;
         if (!created_at) {
-            return handleError(res, 400, "created_at not provided");
+            // return handleError(res, 400, "created_at not provided");
+            return res.status(400).json({
+                success : false , 
+                status : 400,
+                messsage : "created_at not provided",
+                data : []
+            })
         }
         const createdDate = new Date(created_at);
         if (isNaN(createdDate.getTime())) {

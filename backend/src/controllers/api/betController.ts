@@ -70,7 +70,7 @@ export const placeBet = async (req: Request, res: Response) => {
         }
 
         // Check if the game is for the current date
-        const currentDate = new Date();
+        const currentDate = moment().tz(TIMEZONE).startOf('day').toDate();
         const gameDate = new Date(game.created_at);
         if (gameDate.toDateString() !== currentDate.toDateString()) {
             return handleError(

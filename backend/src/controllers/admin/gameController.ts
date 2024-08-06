@@ -87,7 +87,7 @@ export const getGames = async (req: Request, res: Response) => {
     const gameRepository = getRepository(Game);
     const games = await gameRepository.find({
       order: {
-        created_at: 'ASC'
+        created_at: 'DESC'
       }
     });
 
@@ -98,7 +98,7 @@ export const getGames = async (req: Request, res: Response) => {
 
       if (!acc[dateKey]) {
         acc[dateKey] = {
-          created_at: dateKey,
+          created_at: game?.created_at,
           [`${timeKey}_winning_number`]: game.winning_number
         };
       } else {
@@ -108,7 +108,6 @@ export const getGames = async (req: Request, res: Response) => {
       return acc;
     }, {} as Record<string, any>);
 
-    // Convert the grouped games object to an array
     const responseData = Object.values(groupedGames);
 
     return handleSuccess(res, 200, 'Games fetched successfully', responseData);
@@ -295,6 +294,10 @@ export const createGameByAdmin = async (req: Request, res: Response) => {
 
     // Create date for the start of the day
     const createdDate = moment(created_at, 'MM/DD/YYYY').startOf('day').toDate();
+    console.log(createdDate)
+    console.log("*************")
+    console.log("*************")
+    console.log("*************")
 
     const gameRepository = getRepository(Game);
 

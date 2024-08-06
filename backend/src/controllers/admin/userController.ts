@@ -16,6 +16,7 @@ import { generateUsername } from "../api/userController"
 import { ChatbotQuery } from "../../entities/ChatbotQuery";
 import { getRepository, MoreThan, Transaction } from "typeorm";
 import { handleError, handleSuccess } from "../../utils/responseHandler";
+import { Game } from "../../entities/Game";
 dotenv.config();
 
 const APP_URL = process.env.APP_URL as string;
@@ -236,3 +237,27 @@ export const add_user = async (req: Request, res: Response) => {
     return handleError(res, 500, error.message);
   }
 };
+
+export const get_admin_side_dashboard_box = async (req: Request, res: Response) => {
+  try {
+    const betRepository = getRepository(Bet);
+    const gameRepository = getRepository(Game);
+    const userRepository = getRepository(User);
+
+    const all_user_count = (await userRepository.findAndCount()).length;
+    const all_bet_count = (await betRepository.findAndCount()).length;
+    const all_game_count = (await gameRepository.findAndCount()).length;
+
+
+    const data = {
+      all_user_count,
+      all_bet_count,
+      all_game_count,
+    }
+    
+    return handleSuccess(res, 200, "User Retrived Successfully.", data);
+
+  } catch (error: any) {
+    return handleError(res, 500, error.message);
+  }
+}

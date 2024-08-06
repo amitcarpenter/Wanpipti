@@ -8,6 +8,7 @@ import * as userControllers from "../controllers/api/userController";
 import * as gameControllers from "../controllers/api/gameController";
 import * as walletControllers from "../controllers/api/walletController";
 import * as resultControllers from "../controllers/api/resultController";
+import * as FAQsControllers from "../controllers/admin/FAQsController";
 import * as walletTransactionControllers from "../controllers/api/walletTransactionController";
 
 
@@ -29,6 +30,7 @@ router.get("/success-reset", userControllers.render_success_reset);
 
 
 //==================================== Game ==============================
+router.post("/get-number-percentage", gameControllers.get_bet_number_and_percentage);
 router.get("/get-today-games", authenticateUser, gameControllers.getUserTodayGameResults);
 // router.get("/bets/today", authenticateUser, betControllers.getUserBetsForToday);
 
@@ -53,6 +55,12 @@ router.post("/create-transaction", authenticateUser, walletTransactionController
 //==================================== Wallet  ==============================
 router.get("/get-wallet-details", authenticateUser, walletControllers.getUserWalletDetails);
 // router.post("/create-transaction", authenticateUser, walletControllers.createWalletTransaction);
+
+
+
+//===================================== FAQ  =============================
+router.get("/get-faq/all", authenticateUser, FAQsControllers.getFAQs);
+
 
 
 
