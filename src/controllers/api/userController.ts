@@ -143,6 +143,7 @@ export const verifyEmail = async (req: Request, res: Response) => {
         console.log(token)
         if (typeof token !== 'string') {
             return handleError(res, 400, "Invalid token.");
+
         }
         const userRepository = getRepository(User);
         // Find the user with the provided token
@@ -154,7 +155,8 @@ export const verifyEmail = async (req: Request, res: Response) => {
         });
 
         if (!user) {
-            return handleError(res, 400, "Invalid or expired token.");
+            // return handleError(res, 400, "Invalid or expired token.");
+            return res.render("sessionExpire.ejs")
         }
 
         // Update user verification status
@@ -263,6 +265,7 @@ export const forgot_password = async (req: Request, res: Response) => {
 
 
         };
+
         await sendEmail(emailOptions);
         return handleSuccess(res, 200, "Password reset link sent to your email.",)
     } catch (error: any) {
@@ -379,7 +382,7 @@ export const signup_google = async (req: Request, res: Response) => {
         // Save the user again to ensure the token is stored
         const user_data = await userRepository.save(user);
 
-        return handleSuccess(res, 201, "Login Successfully.", user_data.jwt_token);
+        return handleSuccess(res, 201, "Login Successful.", user_data.jwt_token);
     } catch (error: any) {
         console.error("Error during Google signup:", error);
         return handleError(res, 500, error.message);

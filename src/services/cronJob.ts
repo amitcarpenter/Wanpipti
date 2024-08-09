@@ -7,32 +7,11 @@ import { Request, Response } from 'express';
 import { getRepository, MoreThan } from 'typeorm';
 import { handleError, handleSuccess } from '../utils/responseHandler';
 import { any, equal } from 'joi';
+import { Result } from '../entities/Result';
+import { updateWalletBalance } from '../controllers/api/walletTransactionController';
 
 const TIMEZONE = process.env.TIMEZONE as string
 
-
-
-
-// Schedule 2PM game processing
-// cron.schedule('0 14 * * *', process2pmGame);
-
-// Schedule 5PM game processing
-cron.schedule('0 17 * * *', async () => {
-    try {
-        // Same logic as process2pmGame but for 5PM
-    } catch (error) {
-        console.log("Error processing 5PM game:", error);
-    }
-});
-
-// Schedule 9PM game processing
-cron.schedule('0 21 * * *', async () => {
-    try {
-        // Same logic as process2pmGame but for 9PM
-    } catch (error) {
-        console.log("Error processing 9PM game:", error);
-    }
-});
 
 
 // Function to create games
@@ -42,17 +21,17 @@ export const createGame = async () => {
             {
                 game_time: "2 PM",
                 status: "scheduled",
-                winning_number: "12",
+                winning_number: "15",
             },
             {
                 game_time: "5 PM",
                 status: "scheduled",
-                winning_number: "12",
+                winning_number: "20",
             },
             {
                 game_time: "9 PM",
                 status: "scheduled",
-                winning_number: "12",
+                winning_number: "45",
             },
         ];
 
@@ -62,7 +41,6 @@ export const createGame = async () => {
             const newGame = gameRepository.create(game);
             return await gameRepository.save(newGame);
         }));
-
         await resetTodayEarnings()
         console.log('Games created successfully', savedGames);
     } catch (error: any) {
@@ -103,7 +81,7 @@ export const timeToCronExpression = (time: string): string => {
 };
 
 // Function to schedule the cron job
-export const cronJobForcreateGame = (time: string) => {
+export const cronJobForcreateGame = async (time: string) => {
     const cronExpression = timeToCronExpression(time);
     console.log(`Scheduling cron job with expression: ${cronExpression}`);
     cron.schedule(cronExpression, () => {
@@ -115,65 +93,104 @@ export const cronJobForcreateGame = (time: string) => {
 };
 
 
-export const getGameDetails = async (gameTime: string) => {
+// Declare Results of the bets
+export const declare_result_by_70X = async (game_time: string) => {
     try {
-        console.log("api call for the game")
-        const gameRepository = getRepository(Game);
-        const currentDate = moment().tz(TIMEZONE).startOf('day').toDate();
-        console.log(currentDate);
-        const gameDetails = await gameRepository.findOne({
-            where: {
-                game_time: gameTime,
-                created_at: currentDate
-            }
-        });
+        const currentDate = moment().startOf('day').toDate();
+        const betRepository = getRepository(Bet)
+        const gameRepository = getRepository(Game)
+        const resultRepository = getRepository(Result)
 
-        if (!gameDetails) {
-            console.log(`No game found for ${gameTime} on the current date.`);
-            return null;
-        }
-        console.log(gameDetails)
-        return gameDetails;
-    } catch (error) {
-        console.log(`Error fetching game details for ${gameTime} on the current date:`, error);
-        throw error;
-    }
-};
-
-
-export const getBetsAndUserDetails = async (game: any) => {
-    try {
-        const betRepository = getRepository(Bet);
-
-        const bets = await betRepository.find({
-            relations: ['game', 'user'],
-            where: { game: { id: game.id } },
-        });
-        
-        if(game){
-            bets.forEach((bet)=>{
-                if(game.winning_number == bet.choosen_number)
-                    {
-                        console.log("TRUUUUUUUUUUUUUUU")
-                    }
+        const get_current_date_game_data = await gameRepository.findOneBy({ game_time: game_time, created_at: currentDate })
+        const game_winning_number = Number(get_current_date_game_data?.winning_number)
+        const get_bets_by_game = await betRepository.find(
+            {
+                relations: ["game", "user"],
+                where: {
+                    game: { id: get_current_date_game_data?.id }
+                }
             })
-        }
-        console.log(bets, "ljalsdjfj")
 
-        if (bets.length === 0) {
-            console.log(`No bets found for game ID`);
-            return [];
+        if (!get_current_date_game_data) {
+            console.log("No game Available for this Time")
+            return
         }
-        return bets.map(bet => ({
-            betId: bet.id,
-            choosenNumber: bet.choosen_number,
-            betAmount: bet.bet_amount,
-            userId: bet.user.id,
-            userName: bet.user.full_name,
-            userEmail: bet.user.email
-        }));
-    } catch (error) {
-        console.log(`Error fetching bets and user details for game ID`, error);
-        throw error;
+
+        if (get_bets_by_game.length == 0) {
+            console.log("No Bet Available for this game")
+            return
+        }
+
+        const result_data = await resultRepository.findOne({
+            relations: ["game"],
+            where: {
+                game: { id: get_current_date_game_data?.id }
+            }
+        })
+
+        if (result_data) {
+            console.log("Result Already Declare")
+            return
+        }
+
+        const results: any = [];
+        get_bets_by_game.map(async (bet) => {
+            if (Number(bet?.choosen_number) === game_winning_number) {
+                const isWinning = true
+                const winningAmount = Number(bet?.bet_amount) * 70
+                const result = resultRepository.create({
+                    game: bet.game,
+                    bet,
+                    user: bet.user,
+                    is_winning: isWinning,
+                    winning_amount: winningAmount
+                });
+                await updateWalletBalance(bet.user, "BetWin", winningAmount);
+                results.push(result);
+            } else {
+                const isWinning = false
+                const winningAmount = 0
+                const result = resultRepository.create({
+                    game: bet.game,
+                    bet,
+                    user: bet.user,
+                    is_winning: isWinning,
+                    winning_amount: winningAmount
+                });
+                results.push(result);
+            }
+        })
+        await resultRepository.save(results);
+
+    } catch (error: any) {
+        console.log(error.message)
     }
-};
+}
+
+
+// Schedule 2PM game declaration
+cron.schedule('0 14 * * *', async () => {
+    try {
+        await declare_result_by_70X("3 PM")
+    } catch (error) {
+        console.log("Error processing 5PM game:", error);
+    }
+});
+
+// Schedule 5PM game declaration
+cron.schedule('0 17 * * *', async () => {
+    try {
+        await declare_result_by_70X("5 PM")
+    } catch (error) {
+        console.log("Error processing 5PM game:", error);
+    }
+});
+
+// Schedule 9PM game declaration
+cron.schedule('0 21 * * *', async () => {
+    try {
+        await declare_result_by_70X("5 PM")
+    } catch (error) {
+        console.log("Error processing 9PM game:", error);
+    }
+});

@@ -326,3 +326,50 @@ export const createGameByAdmin = async (req: Request, res: Response) => {
     return handleError(res, 500, error.message);
   }
 };
+
+
+export const updateGameByAdmin = async (req: Request, res: Response) => {
+  try {
+    const { created_at, games } = req.body;
+
+    if (!created_at || !games || games.length === 0) {
+      return handleError(res, 400, 'created_at or games data not provided or is empty');
+    }
+
+    // Create date for the start of the day
+    const createdDate = moment(created_at, 'MM/DD/YYYY').startOf('day').toDate();
+
+    const gameRepository = getRepository(Game);
+
+    // Find existing games for the provided date
+    const existingGames = await gameRepository.find({
+      where: {
+        created_at: Between(createdDate, moment(createdDate).endOf('day').toDate())
+      }
+    });
+
+
+    if (existingGames.length === 0) {
+      return handleError(res, 404, 'No games found for the provided date');
+    }
+    console.log(existingGames)
+
+    // Update existing games
+    const updatedGames = await Promise.all(games.map(async (game: any) => {
+      console.log(game)
+      const gameToUpdate = existingGames.find(existingGame => existingGame.game_time === game.game_time);
+
+      if (!gameToUpdate) {
+        return handleError(res, 404, `Game with id ${game.game_time} not found`);
+      }
+
+      Object.assign(gameToUpdate, game); // Update existing game with new data
+      return await gameRepository.save(gameToUpdate);
+    }));
+
+    return handleSuccess(res, 200, 'Games updated successfully', updatedGames);
+  } catch (error: any) {
+    return handleError(res, 500, error.message);
+  }
+};
+

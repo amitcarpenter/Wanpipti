@@ -94,7 +94,7 @@ export const createGameBetSetting = async (req: Request, res: Response) => {
 export const getAllGameBetSettings = async (req: Request, res: Response) => {
     try {
         const gameSettingRepository = getRepository(GameBetSetting);
-        const gameSettings = await gameSettingRepository.find({order : {created_at : "DESC"}});
+        const gameSettings = await gameSettingRepository.find({ order: { created_at: "DESC" } });
         return handleSuccess(res, 200, 'Game Bet settings retrieved successfully', gameSettings);
     } catch (error: any) {
         console.error('Error in getAllGameSettings:', error);
@@ -102,36 +102,6 @@ export const getAllGameBetSettings = async (req: Request, res: Response) => {
     }
 };
 
-// update game setting 
-// export const updateBetGameSetting = async (req: Request, res: Response) => {
-//     try {
-//         const schema = Joi.object({
-//             max_bet_limit: Joi.number().required(),
-//             bet_number: Joi.number().required(),
-//         });
-
-//         const { error, value } = schema.validate(req.body);
-//         if (error) {
-//             return handleError(res, 400, error.details[0].message);
-//         }
-//         const { max_bet_limit, bet_number } = value;
-//         const gameSettingRepository = getRepository(GameBetSetting);
-//         let gameSetting = await gameSettingRepository.findOneBy({ bet_number: bet_number });
-
-//         if (!gameSetting) {
-//             return handleError(res, 400, 'Game setting not found');
-//         }
-
-//         if (max_bet_limit) {
-//             gameSetting.max_bet_limit = max_bet_limit;
-//         }
-//         const updatedGameSetting = await gameSettingRepository.save(gameSetting);
-//         return handleSuccess(res, 200, 'Game Bet setting updated successfully', updatedGameSetting);
-//     } catch (error: any) {
-//         console.error('Error in updateGameSetting:', error);
-//         return handleError(res, 500, 'An error occurred while updating the game setting');
-//     }
-// };
 
 export const updateBetGameSetting = async (req: Request, res: Response) => {
     try {
@@ -156,6 +126,10 @@ export const updateBetGameSetting = async (req: Request, res: Response) => {
 
         if (!gameSetting) {
             return handleError(res, 400, 'Game setting not found for the provided date and bet number');
+        }
+
+        if (max_bet_limit == 0) {
+            gameSetting.max_bet_limit = 0;
         }
         if (max_bet_limit) {
             gameSetting.max_bet_limit = max_bet_limit;

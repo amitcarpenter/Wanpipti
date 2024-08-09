@@ -30,7 +30,7 @@ export class User {
     @Column({ nullable: true })
     jwt_token: string;
 
-    @Column({ nullable: true })
+    @Column({ nullable: true, type: 'varchar', length: 2024 })
     google_signup_token: string;
 
     @Column({ nullable: true, type: 'varchar', length: 64 })

@@ -238,26 +238,35 @@ export const add_user = async (req: Request, res: Response) => {
   }
 };
 
+
 export const get_admin_side_dashboard_box = async (req: Request, res: Response) => {
   try {
     const betRepository = getRepository(Bet);
     const gameRepository = getRepository(Game);
     const userRepository = getRepository(User);
 
-    const all_user_count = (await userRepository.findAndCount()).length;
-    const all_bet_count = (await betRepository.findAndCount()).length;
-    const all_game_count = (await gameRepository.findAndCount()).length;
+    // Get counts for users and games
+    const all_user_count = await userRepository.count();
+    const all_game_count = await gameRepository.count();
 
+    // Get all bets
+    const all_bets = await betRepository.find();
 
+    // Calculate total bet amount
+    let total_bet_amount = all_bets.reduce((total, bet) => {
+      return total + Number(bet.bet_amount);
+    }, 0);
+
+    // Prepare the data object
     const data = {
       all_user_count,
-      all_bet_count,
+      total_bet_amount,
       all_game_count,
-    }
-    
-    return handleSuccess(res, 200, "User Retrived Successfully.", data);
+    };
+
+    return handleSuccess(res, 200, "Dashboard data retrieved successfully.", data);
 
   } catch (error: any) {
     return handleError(res, 500, error.message);
   }
-}
+};

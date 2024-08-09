@@ -9,7 +9,7 @@ export class GameBetSetting {
   @Column()
   bet_number: number;
 
-  @Column()
+  @Column({ nullable: true })
   max_bet_limit: number;
 
   @Column()

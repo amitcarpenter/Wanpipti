@@ -3,6 +3,7 @@ import crypto from "crypto";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
+import Decimal from 'decimal.js';
 import Joi, { number } from "joi";
 import moment from "moment-timezone";
 import { Bet } from "../../entities/Bet";
@@ -54,7 +55,7 @@ export const getWalletTransactionsByUser = async (req: Request, res: Response) =
 
 //     switch (transactionType) {
 //         case 'deposit':
-//         case 'betWin':
+//         case 'BetWin':
 //             walletBalance += Number(amount);
 //             break;
 //         case 'withdraw':
@@ -96,20 +97,27 @@ export async function updateWalletBalance(user: any, transactionType: string, am
 
     let walletBalance = parseFloat(wallet.wallet_balance.toString());
 
-    if (transactionType == "withdraw") {
+    if (transactionType == "Withdraw") {
         if (walletBalance < amount) {
-            throw new Error('Not Sufficient Amount');
+            throw new Error('Insufficient Amount');
         }
 
     }
 
+    console.log(amount)
+    console.log(typeof amount)
+    console.log("-----------------------")
+    console.log("-----------------------")
+    console.log("-----------------------")
+    console.log("-----------------------")
+
     switch (transactionType) {
-        case 'deposit':
-        case 'betWin':
+        case 'Deposit':
+        case 'BetWin':
             walletBalance += Number(amount);
             break;
-        case 'withdraw':
-        case 'betPlace':
+        case 'Withdraw':
+        case 'BetPlace':
             walletBalance -= Number(amount);
             break;
         default:
@@ -139,7 +147,7 @@ export async function updateWalletBalance(user: any, transactionType: string, am
 export const createWalletTransaction = async (req: Request, res: Response) => {
     try {
         const transactionSchema = Joi.object({
-            transaction_type: Joi.string().valid('deposit', 'betPlace', 'betWin', 'withdraw').required(),
+            transaction_type: Joi.string().valid('Deposit', 'BetPlace', 'BetWin', 'Withdraw').required(),
             amount: Joi.number().greater(0).required(),
         });
 
@@ -166,17 +174,17 @@ export const createWalletTransaction = async (req: Request, res: Response) => {
         // Customize response message based on transaction type
         let responseMessage = '';
         switch (transaction_type) {
-            case 'deposit':
-                responseMessage = `Deposit of ${amount}$ successful. Your account has been credited.`;
+            case 'Deposit':
+                responseMessage = `Deposit of $${amount} successful. Your account has been credited.`;
                 break;
-            case 'betPlace':
-                responseMessage = `Bet of ${amount}$ has been placed successfully.`;
+            case 'BetPlace':
+                responseMessage = `Bet of $${amount} has been placed successfully.`;
                 break;
-            case 'betWin':
-                responseMessage = `Congratulations! Your winnings of ${amount}$ have been credited to your Wallet.`;
+            case 'BetWin':
+                responseMessage = `Congratulations! Your winnings of $${amount} have been credited to your Wallet.`;
                 break;
-            case 'withdraw':
-                responseMessage = `Withdrawal of ${amount}$ has been processed successfully.`;
+            case 'Withdraw':
+                responseMessage = `Withdrawal of $${amount} has been processed successfully.`;
                 break;
             default:
                 responseMessage = 'Transaction successful';

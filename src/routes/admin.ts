@@ -40,7 +40,8 @@ router.get("/games/today", authenticateUser, isAdmin, gameControllers.getTodayGa
 router.post("/game/update/:id", authenticateUser, isAdmin, gameControllers.updateGame);
 router.delete("/game/delete/:id", authenticateUser, isAdmin, gameControllers.deleteGame);
 router.post("/create-game-by-admin", authenticateUser, isAdmin, gameControllers.createGameByAdmin);
-router.post("/update-game-by-admin", authenticateUser, isAdmin, gameControllers.edit_game_details);
+// router.post("/update-game-by-admin", authenticateUser, isAdmin, gameControllers.edit_game_details);
+router.post("/update-game-by-admin", authenticateUser, isAdmin, gameControllers.updateGameByAdmin);
 
 
 //===================================== Bet =============================

@@ -178,84 +178,88 @@ console.log(TIMEZONE)
 // };
 
 
-export const getUserTodayGameResults = async (req: Request, res: Response) => {
-  try {
-    const user_req = req.user as IUser;
-    const userRepository = getRepository(User);
-    const user = await userRepository.findOneBy({ id: user_req.id });
+// export const getUserTodayGameResults = async (req: Request, res: Response) => {
+//   try {
+//     const user_req = req.user as IUser;
+//     const userRepository = getRepository(User);
+//     const user = await userRepository.findOneBy({ id: user_req.id });
 
-    if (!user) {
-      return handleError(res, 400, 'User not found.');
-    }
-    const timeZone = TIMEZONE;
-    const todayLocal = moment.tz(timeZone).startOf('day');
-    const tomorrowLocal = moment.tz(timeZone).endOf('day');
-    const todayUTC = todayLocal.clone().utc().toDate();
-    const tomorrowUTC = tomorrowLocal.clone().utc().toDate();
-    const currentDate = moment().tz(TIMEZONE).startOf('day').toDate();
-    const gameRepository = getRepository(Game);
-    const games = await gameRepository.find({
-      where: {
-        created_at: currentDate
-      },
-    });
+//     if (!user) {
+//       return handleError(res, 400, 'User not found.');
+//     }
+//     const timeZone = TIMEZONE;
+//     const todayLocal = moment.tz(timeZone).startOf('day');
+//     const tomorrowLocal = moment.tz(timeZone).endOf('day');
+//     const todayUTC = todayLocal.clone().utc().toDate();
+//     const tomorrowUTC = tomorrowLocal.clone().utc().toDate();
+//     const currentDate = moment().tz(TIMEZONE).startOf('day').toDate();
+//     const gameRepository = getRepository(Game);
 
-    if (games.length === 0) {
-      return handleError(res, 400, 'No games found for today.');
-    }
-    const gameIds = games.map(game => game.id);
-    const betRepository = getRepository(Bet);
-    const bets = await betRepository.find({
-      where: {
-        game: { id: In(gameIds) },
-        user: { id: user.id },
-        created_at: Between(todayUTC, tomorrowUTC)
-      },
-      relations: ['game'],
-    });
+//     const todayUTCStart = moment().tz(timeZone).startOf('day').utc().toDate();
+//     const todayUTCEnd = moment().tz(timeZone).endOf('day').utc().toDate();
 
-    // Map to store chosen numbers for each game
-    const gameChosenNumbersMap: { [key: number]: string[] } = {};
+//     const games = await gameRepository.find({
+//       where: {
+//         created_at: Between(todayUTCStart, todayUTCEnd)
+//       },
+//     });
 
-    bets.forEach(bet => {
-      const gameId = bet.game.id;
-      const chosenNumber = bet.choosen_number;
+//     if (games.length === 0) {
+//       return handleError(res, 400, 'No games found for today.');
+//     }
+//     const gameIds = games.map(game => game.id);
+//     const betRepository = getRepository(Bet);
+//     const bets = await betRepository.find({
+//       where: {
+//         game: { id: In(gameIds) },
+//         user: { id: user.id },
+//         created_at: Between(todayUTC, tomorrowUTC)
+//       },
+//       relations: ['game'],
+//     });
 
-      if (!gameChosenNumbersMap[gameId]) {
-        gameChosenNumbersMap[gameId] = [];
-      }
-      gameChosenNumbersMap[gameId].push(chosenNumber);
-    });
+//     // Map to store chosen numbers for each game
+//     const gameChosenNumbersMap: { [key: number]: string[] } = {};
 
-    const resultRepository = getRepository(Result);
-    const results = await resultRepository.find({
-      where: {
-        user: { id: user.id },
-        game: { created_at: Between(todayUTC, tomorrowUTC) }
-      },
-      relations: ['game', 'bet'],
-      order: { created_at: 'DESC' }
-    });
+//     bets.forEach(bet => {
+//       const gameId = bet.game.id;
+//       const chosenNumber = bet.choosen_number;
 
-    const gamesWithResults = games.map(game => {
-      const gameResults = results.filter(result => result.game.id === game.id);
-      return {
-        game,
-        choosen_number: gameChosenNumbersMap[game.id] || [],
-        results: gameResults.map(result => ({
-          bet: result.bet,
-          is_winning: result.is_winning,
-          winning_amount: result.winning_amount,
-          created_at: result.created_at
-        }))
-      };
-    });
+//       if (!gameChosenNumbersMap[gameId]) {
+//         gameChosenNumbersMap[gameId] = [];
+//       }
+//       gameChosenNumbersMap[gameId].push(chosenNumber);
+//     });
 
-    return handleSuccess(res, 200, "User's game results for today fetched successfully", gamesWithResults);
-  } catch (error: any) {
-    return handleError(res, 500, error.message);
-  }
-};
+//     const resultRepository = getRepository(Result);
+//     const results = await resultRepository.find({
+//       where: {
+//         user: { id: user.id },
+//         game: { created_at: Between(todayUTC, tomorrowUTC) }
+//       },
+//       relations: ['game', 'bet'],
+//       order: { created_at: 'DESC' }
+//     });
+
+//     const gamesWithResults = games.map(game => {
+//       const gameResults = results.filter(result => result.game.id === game.id);
+//       return {
+//         game,
+//         choosen_number: gameChosenNumbersMap[game.id] || [],
+//         results: gameResults.map(result => ({
+//           bet: result.bet,
+//           is_winning: result.is_winning,
+//           winning_amount: result.winning_amount,
+//           created_at: result.created_at
+//         }))
+//       };
+//     });
+
+//     return handleSuccess(res, 200, "User's game results for today fetched successfully", gamesWithResults);
+//   } catch (error: any) {
+//     return handleError(res, 500, error.message);
+//   }
+// };
 
 
 export const get_bet_number_and_percentage = async (req: Request, res: Response) => {
@@ -308,3 +312,83 @@ export const get_bet_number_and_percentage = async (req: Request, res: Response)
     return handleError(res, 500, error.message);
   }
 }
+
+
+
+
+export const getUserTodayGameResults = async (req: Request, res: Response) => {
+  try {
+    const user_req = req.user as IUser;
+    const userRepository = getRepository(User);
+    const user = await userRepository.findOneBy({ id: user_req.id });
+
+    if (!user) {
+      return handleError(res, 400, 'User not found.');
+    }
+
+    const todayStart = moment().startOf('day').toDate();
+    const todayEnd = moment().endOf('day').toDate();
+
+    const gameRepository = getRepository(Game);
+    const games = await gameRepository.find({
+      where: {
+        created_at: Between(todayStart, todayEnd)
+      },
+    });
+
+    if (games.length === 0) {
+      return handleError(res, 400, 'No games found for today.');
+    }
+
+    const gameIds = games.map(game => game.id);
+
+    const betRepository = getRepository(Bet);
+    const bets = await betRepository.find({
+      where: {
+        game: { id: In(gameIds) },
+        user: { id: user.id },
+        created_at: Between(todayStart, todayEnd)
+      },
+      relations: ['game'],
+    });
+
+    const gameChosenNumbersMap: { [key: number]: string[] } = {};
+    bets.forEach(bet => {
+      const gameId = bet.game.id;
+      const chosenNumber = bet.choosen_number;
+
+      if (!gameChosenNumbersMap[gameId]) {
+        gameChosenNumbersMap[gameId] = [];
+      }
+      gameChosenNumbersMap[gameId].push(chosenNumber);
+    });
+
+    const resultRepository = getRepository(Result);
+    const results = await resultRepository.find({
+      where: {
+        user: { id: user.id },
+        game: { id: In(gameIds) }
+      },
+      relations: ['game', 'bet'],
+      order: { created_at: 'DESC' }
+    });
+
+    const gamesWithResults = games.map(game => {
+      const gameResults = results.filter(result => result.game.id === game.id);
+      return {
+        game,
+        choosen_number: gameChosenNumbersMap[game.id] || [],
+        results: gameResults.map(result => ({
+          bet: result.bet,
+          is_winning: result.is_winning,
+          winning_amount: result.winning_amount,
+          created_at: result.created_at
+        }))
+      };
+    });
+
+    return handleSuccess(res, 200, "User's game results for today fetched successfully", gamesWithResults);
+  } catch (error: any) {
+    return handleError(res, 500, error.message);
+  }
+};

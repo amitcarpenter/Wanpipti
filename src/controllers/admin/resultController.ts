@@ -318,7 +318,7 @@ export const declareResults = async (req: Request, res: Response) => {
         for (const winning of result_calculate.winnings) {
             try {
                 const user_find = await userRepository.findOneBy({ id: winning.userId });
-                await updateWalletBalance(user_find, "betWin", winning.winningAmount);
+                await updateWalletBalance(user_find, "BetWin", winning.winningAmount);
                 const walletRepository = getRepository(Wallet);
                 const wallet = await walletRepository.findOne({ where: { user: { id: winning.userId } } });
                 if (wallet) {
