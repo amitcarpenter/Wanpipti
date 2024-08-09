@@ -19,36 +19,6 @@ import { handleError, handleSuccess } from "../../utils/responseHandler";
 const APP_URL = process.env.APP_URL as string;
 
 // create game setting
-// export const createGameBetSetting = async (req: Request, res: Response) => {
-//     try {
-//         const schema = Joi.object({
-//             bet_number: Joi.number().min(0).max(99).required(),
-//             max_bet_limit: Joi.number().required(),
-//         });
-
-//         const { error, value } = schema.validate(req.body);
-//         if (error) {
-//             return handleError(res, 400, error.details[0].message);
-//         }
-//         const { max_bet_limit, bet_number } = value;
-//         const gameSettingBetRepository = getRepository(GameBetSetting);
-//         const game_bet_setting = await gameSettingBetRepository.findOneBy({ bet_number: bet_number });
-//         if (game_bet_setting) {
-//             return handleError(res, 400, "this number already exist");
-//         }
-
-//         const newGameSetting = gameSettingBetRepository.create({
-//             max_bet_limit,
-//             bet_number
-//         });
-//         const savedGameBetSetting = await gameSettingBetRepository.save(newGameSetting);
-//         return handleSuccess(res, 201, 'Game setting created successfully', savedGameBetSetting);
-//     } catch (error: any) {
-//         console.error('Error in createGameSetting:', error);
-//         return handleError(res, 500, error.message);
-//     }
-// };
-
 export const createGameBetSetting = async (req: Request, res: Response) => {
     try {
         const schema = Joi.object({
@@ -102,7 +72,7 @@ export const getAllGameBetSettings = async (req: Request, res: Response) => {
     }
 };
 
-
+// update game by admin 
 export const updateBetGameSetting = async (req: Request, res: Response) => {
     try {
         const schema = Joi.object({
